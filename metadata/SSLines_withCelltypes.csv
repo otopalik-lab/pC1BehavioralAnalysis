@@ -1,0 +1,37 @@
+3047597,Empty Split,Empty Split
+SS46542,pIP10,pIP10
+SS100769,pC1\_1a,pC1\_1a
+SS45469,pC1\_2abc,"pC1\_ 2a,2b,2c"
+SS100593,pC1\_2ab,"pC1\_2a,2b"
+SS59821,"pC1\_1a, 2abc, 3c","PC1\_1a,2a,2b,2c,3c"
+SS101336,pC1\_3bc,"PC1\_3b,c"
+SS99841,"pC1\_4a, 4b","PC1\_4a,4b"
+SS102677,"pC1\_4a, 6b","PC1\_4a, 6b"
+SS100234,"pC1\_4a, 5b, 6b","PC1\_4a,5b,6b"
+SS100232,"pC1\_4a, 6b, 19","PC1\_4a,6b,19"
+SS106227,"pC1\_4b, 8c,19","PC1\_4b, 8c,19"
+SS99807,"pC1\_8a, 19","PC1\_8a, 19"
+SS108113,pC1\_10bd,"PC1\_10b,10d"
+SS100498,pC1\_10bd,"PC1\_10b, 10d"
+SS100944,pC1\_10cd,"PC1\_10c, 10d"
+SS01539,pC1\_12b,"PC1\_12b, PC1\_7a stochastic, Kcgamma stochastic"
+SS99350,"pC1\_12b, 4ab","PC1\_12b, 4a, 4b"
+SS03661,"pC1\_12b, 4ab","PC1\_12b, 4a, 4b"
+SS106638,"pC1\_13a,14ab","PC1\_13a,14a,b"
+SS101146,pC1\_13bc,"PC1\_13b,c"
+SS101156,"pC1\_13abc, 14ab","PC1\_13a, b,c, 14 a,b"
+SS59900,pC1\_14a,"PC1\_14a, (b)"
+SS102671,pC1\_15abc,"PC1\_15a,b,c"
+SS100896,"pC1\_15abc,16b","PC1\_15a,b,c some PC1\_16b"
+SS100595,pC1\_16a,PC1\_16a
+SS100424,pC1\_17ab,"PC1\_17a,b"
+SS102696,pC1\_17ab,PC1\_17a.b
+SS108064,pC1\_17ab,"PC1\_17a,b"
+SS100895,pC1\_19,PC1\_19
+SS108135,pC1x\_a,pC1x\_a MAP
+SS101570,pC1x\_a,pC1x\_a MAP
+SS108033,PC1x\_b,PC1x\_b
+SS39313,PC1x\_ac,"PC1x\_a,c. (much more likely than a,d; b excluded)"
+SS59911,pC1x\_abd,"pC1x\_a,b,d"
+SS43275,pMP2,pMP2
+SS61090,DNp13,DNp13
