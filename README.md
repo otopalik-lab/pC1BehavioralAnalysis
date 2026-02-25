@@ -17,25 +17,15 @@ addpath(genpath([Insert path to pC1_BehavioralAnalysis here]);
 
 ## Repository Contents
 
-| Folder           | Column 2                                                                                                                                                                                                                                              |
+| Folder             | Description                                                                                                                                                                                                                                           |
 |--------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | figure_source_data |   This must be downloaded from [insert link here] and contains the workspaces and associated metadata to generate Figures.                                                                                                                            |
 | figures            |   These scripts regenerate the contents of Figures 4, 5, and associated supplements. They depend on the functions in the 'dep' directory.                                                                                                             |
 | results            |   If 'save' is set to 'True' in any of the figures scripts, the plots will be saved in the this directory, in the specified folder. The default is that the figures will not be saved. This directory is only stored locally and listed in .gitignore.|                                                |
 | processing_code    |   This code regenerates the figure_src_data from the raw song recordings and song types classifications, as well as animal tracking and behavioral classifications                                                                                    |
+| dep                |   This contains functions on which data processing and figure scripts depend. Some functions are written by A. Otopalik, at times with assistance from Claude, whereas others were downloaded from the Mathworks website and cited below.             | 
 
-
-
-
-figure_src_data: This must be downloaded from [insert link here] and contains the workspaces and associated metadata to generate Figures.
-
-figures:  These scripts regenerate the contents of Figures 4, 5, and associated supplements. They depend on the functions in the 'dep' directory.
-
-results:  If 'save' is set to 'True' in any of the figures scripts, the plots will be saved in the this directory, in the specified folder. The               default is that the figures will not be saved. This directory is only stored locally and listed in .gitignore.
-
-src_code: 
-
-dep:   Contains functions on which data processing and analysis code depends. Some functions are written by A. Otopalik, at times with assistance          from Claude. The following were downloaded from the Mathworks website:
+The following were downloaded from the Mathworks website and reside in the 'dep' directory:
         
         Rob Kohr (2026). cell2csv (https://www.mathworks.com/matlabcentral/fileexchange/7601-cell2csv), MATLAB Central File Exchange. Retrieved             February 25, 2026.
 
