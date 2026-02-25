@@ -6,7 +6,7 @@
 1. After cloning this repository, users must download the figure source data and place this folder (figure_src_data) in the repository so that its path is as follows: ('.../pC1_BehavioralAnalysis/figure_src_data').
 
 2. Prior to running any scripts in MATLAB, the repository must be added to the MATLAB path:
-      addpath(genpath(<pathtorepositoryinsertedhere>));
+      addpath(genpath([Insert path to pC1_BehavioralAnalysis here]);
 
 3. The user can then run any of the scripts situated in the figures directory to regenerate Figures 4, 5 and associated supplements.
 
