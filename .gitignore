@@ -1,0 +1,3 @@
+# do not push/pull results files (includes plots, large workspaces, etc)
+results
+data
