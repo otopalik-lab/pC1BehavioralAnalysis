@@ -1,7 +1,7 @@
-## pC1_BehavioralAnalysis
-# This repository contains code for the processing and analysis of behavioral data collected for Rubin et al., 2025.
+# pC1_BehavioralAnalysis
+## This repository contains code for the processing and analysis of behavioral data collected for Rubin et al., 2025.
 
-# Getting Started
+## Getting Started
 
 1. After cloning this repository, users must download the figure source data and place this folder (figure_src_data) in the repository so that its path is as follows: ('.../pC1_BehavioralAnalysis/figure_src_data').
 
@@ -12,7 +12,7 @@
 
 4. The user can also access and download the raw song recordings and song type classifications (constituting Figure 4 and associated supplements) and animal tracking data (constituting Figure 5 and associated supplements) at [insert link here]. The user can then employ scripts in src_code to process these data for regeneration of the figure source data folder.
 
-# Repository Contents
+## Repository Contents
 
 figure_src_data: This must be downloaded from [insert link here] and contains the workspaces and associated metadata to generate Figures.
 
