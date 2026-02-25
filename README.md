@@ -1,4 +1,4 @@
-## The pC1 Behavioral Analysis repository contains code for the processing and analysis of behavioral data collected for Rubin et al., 2025.
+This repository contains code for the processing and analysis of behavioral data collected for Rubin et al., 2025.
 
 ## Getting Started
 
