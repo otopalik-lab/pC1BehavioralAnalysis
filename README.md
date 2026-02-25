@@ -1,19 +1,15 @@
 # pC1_BehavioralAnalysis
-## This repository contains code for the processing and analysis of behavioral data collected for Rubin et al., 2025.
+This repository contains code for the processing and analysis of behavioral data collected for Rubin et al., 2025.
 
 ## Getting Started
 
-1. After cloning this repository, users must download the figure source data and place this folder (figure_source_data) in the repository so that its path is as follows:
+1. After cloning this repository, users must download the figure source data and place this folder (figure_source_data) in the repository's main directory (.../pC1_BehavioralAnalysis/figure_source_data)
 
-('.../pC1_BehavioralAnalysis/figure_source_data').
-
-2. Prior to running any scripts in MATLAB, the repository must be added to the MATLAB path, as:
-
-addpath(genpath([Insert path to pC1_BehavioralAnalysis here]);
+2. Prior to running any scripts in MATLAB, the repository must be added to the MATLAB path: addpath(genpath('.../pC1_BehavioralAnalysis))
 
 3. The user can then run any of the scripts situated in the figures directory to regenerate Figures 4, 5 and associated supplements.
 
-4. The user can also access and download the raw song recordings and song type classifications (constituting Figure 4 and associated supplements) as well as the animal tracking and behavioral classification data (constituting Figure 5 and associated supplements) at [insert link here]. The user can then employ scripts in src_code to process these data for regeneration of the figure source data folder.
+4. The user can also access and download the raw song recordings and song type classifications (constituting Figure 4 and associated supplements), as well as the animal tracking and behavioral classification data (constituting Figure 5 and associated supplements) at [insert link here]. The user can then employ scripts in src_code to process these data for regeneration of the figure source data folder.
 
 ## Repository Contents
 
