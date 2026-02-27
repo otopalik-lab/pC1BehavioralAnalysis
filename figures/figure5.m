@@ -23,7 +23,10 @@ selectedLines = table2struct(readtable('/Users/otopalika/Documents/GitHub/pC1Beh
 lines = {selectedLines.Var1}; lines = lines([1 3:35]);
 celltypes = {selectedLines.Var2}; celltypes = celltypes([1 3:35])
 
-% Colormaps:
+%% Fig 5A: Example of LED stimulus-aligned rasters of unilateral wing events, aggression events, and interfly distance for one example chamber:
+
+
+
 
 %% Plotting Dependencies and Parameters for Grouped Data:
 
