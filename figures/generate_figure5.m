@@ -1,4 +1,5 @@
-% This script regenerates all of the plots that comprise Figure 5
+% This script regenerates all of the plots that comprise Figure 5. pC1
+% differentially promote and modulate male acoustic signaling.
 
 %% Settings for Saving Plots:
 

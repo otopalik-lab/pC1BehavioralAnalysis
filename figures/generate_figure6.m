@@ -37,6 +37,6 @@ plot_2bin_heatmap('all','close') %'proximal is equivalent to 'close' in the pape
 plot_2bin_heatmap('all','unilateralwing')
 plot_2bin_heatmap('all','aggression')
 
-%% Figure 5E: Sankey Diagrams for LED Stimulation and Post-Stimulation Periods:
+%% Figure 6E: Sankey Diagrams for LED Stimulation and Post-Stimulation Periods:
 
 plot_behavior_sankey('all', {'close','aggression','unilateralwing'}, false)

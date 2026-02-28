@@ -14,7 +14,7 @@ SaveFormat = '.png'; %can change this as desired (see 'save' function in MATLAB 
 SavePath = '/Users/otopalika/Documents/GitHub/pC1BehavioralAnalysis/results/figure5'; % can change as desired
 
 
-%% Figure S5A: Heatmaps of behavioral probabilities over time across all pC1 SS Lines for all behavioral classes:
+%% Figure S6A: Heatmaps of behavioral probabilities over time across all pC1 SS Lines for all behavioral classes:
 
 binsize = 1000; %in milliseconds
 plot_PSTH_heatmap('all','close', binsize) %'proximal is equivalent to 'close' in the paper
@@ -28,7 +28,7 @@ plot_PSTH_heatmap('all','boxing',binsize)
 plot_PSTH_heatmap('all','headbutt',binsize)  
 plot_PSTH_heatmap('all','wingflick',binsize)  
 
-%% Figure 5SB: 2-bin (30-sec each) Heatmaps of behavioral probabilities with p-value annotations all pC1 SS Lines for all behavioral classes:
+%% Figure 56B: 2-bin (30-sec each) Heatmaps of behavioral probabilities with p-value annotations all pC1 SS Lines for all behavioral classes:
 
 plot_2bin_heatmap('all','close', binsize) %'proximal is equivalent to 'close' in the paper
 plot_2bin_heatmap('all','still', binsize)  
@@ -41,7 +41,7 @@ plot_2bin_heatmap('all','boxing',binsize)
 plot_2bin_heatmap('all','headbutt',binsize)  
 plot_2bin_heatmap('all','wingflick',binsize)  
 
-%% Figure 5SC-D: Sankey Diagrams for LED Stimulation and Post-Stimulation Periods, all behavioral classes:
+%% Figure 56C-D: Sankey Diagrams for LED Stimulation and Post-Stimulation Periods, all behavioral classes:
 
 plot_behavior_sankey('all', {'close','still','chase','approach','orient',...
     'unilateralwing','tussle','boxing','headbutt','wingflick'}, false)
