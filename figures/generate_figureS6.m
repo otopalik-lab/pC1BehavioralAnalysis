@@ -2,15 +2,16 @@
 % 5. Extended Description of Behavioral Phenotypes during Male-Male
 % Interactions across pC1 driver lines.
 
-%% Settings for Saving Plots:
-
-SaveFormat = '.png'; %can change this as desired (see 'save' function in MATLAB for available formats'
-SavePath = '/Users/otopalika/Documents/GitHub/pC1BehavioralAnalysis/results/figure5'; % can change as desired
 
 %% Load Data and Metadata to for Base Workspace:
 
 addpath(genpath('/Users/otopalika/Documents/GitHub/pC1BehavioralAnalysis'));
 load('MaleMaleBehavior_BaseWorkspace.mat'); % load workspace with pre-generated data and randomly selected trials (SSinds) for each stable split line, for reproducible figures:
+
+%% Settings for Saving Plots:
+
+SaveFormat = '.png'; %can change this as desired (see 'save' function in MATLAB for available formats'
+SavePath = '/Users/otopalika/Documents/GitHub/pC1BehavioralAnalysis/results/figure5'; % can change as desired
 
 
 %% Figure S5A: Heatmaps of behavioral probabilities over time across all pC1 SS Lines for all behavioral classes:
