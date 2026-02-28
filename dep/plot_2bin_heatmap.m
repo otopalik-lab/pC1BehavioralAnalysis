@@ -170,18 +170,18 @@ h_prob.CellLabelColor  = 'none';
 h_prob.ColorbarVisible = 'off';
 h_prob.Colormap        = flipud(gray);
 h_prob.Title           = ['p(' behavior ')'];
-h_prob.FontSize        = 7;   % small enough for 34 rows to render labels
+h_prob.FontSize        = 10;   % small enough for 34 rows to render labels
 
 % Behavior-specific color limits; stored separately to pass to the colorbar axes
 color_limits = [];  % empty → HeatmapChart auto-scales
 switch behavior
     case 'unilateralwing';  color_limits = [0 0.50];
     case 'aggression';      color_limits = [0 0.50];
-    case 'proximal';        color_limits = [0 1.00];
-    case 'notmoving';       color_limits = [0 1.00];
-    case 'pursuit';         color_limits = [0 0.40];
+    case 'close';           color_limits = [0 1.00];
+    case 'still';           color_limits = [0 1.00];
+    case 'chase';           color_limits = [0 0.40];
     case 'approach';        color_limits = [0 0.50];
-    case 'fixation';        color_limits = [0 1.00];
+    case 'orient';          color_limits = [0 1.00];
     case 'boxing';          color_limits = [0 0.50];
     case 'headbutt';        color_limits = [0 0.35];
     case 'tussle';          color_limits = [0 0.40];
@@ -198,7 +198,7 @@ hold(ax, 'on');
 for bin = 1:2
     sig = sig_rows{bin};
     if ~isempty(sig)
-        scatter(ax, bin * ones(length(sig), 1), sig, 20, 'filled', ...
+        scatter(ax, bin * ones(length(sig), 1), sig, 15, 'filled', ...
                 'MarkerFaceColor', annot_color);
     end
 end
@@ -210,13 +210,13 @@ if isempty(clim_vals)
     clim_vals = [min(SS_PSTHs_allLines(:)), max(SS_PSTHs_allLines(:))];
 end
 n = 256;
-cb_ax = axes(f, 'Position', [0.20, 0.03, 0.60, 0.04]);
+cb_ax = axes(f, 'Position', [0.20, 0.05, 0.60, 0.02]);
 imagesc(cb_ax, linspace(clim_vals(1), clim_vals(2), n), 1, (1:n));
 colormap(cb_ax, flipud(gray));
 cb_ax.YTick   = [];
 cb_ax.XLim    = clim_vals;
-cb_ax.TickDir = 'out';
-cb_ax.FontSize = 9;
+cb_ax.TickDir = 'in';
+cb_ax.FontSize = 10;
 xlabel(cb_ax, ['p(' behavior ')'], 'FontSize', 10);
 
 %% Save (optional — only if both SavePath and SaveFormat are provided)

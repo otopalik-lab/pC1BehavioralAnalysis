@@ -136,9 +136,9 @@ ax.YTick                = 1:numSelected;
 ax.YTickLabel           = labels(line_inds);
 ax.TickLabelInterpreter = 'none';
 ax.XTick                = [];
-ax.FontSize             = 7;
+ax.FontSize             = 9;
 ax.TickDir              = 'out';
-title(ax, strrep(behavior, '_', ' '), 'FontSize', 9);
+title(ax, ['p(' behavior ')'], 'FontSize', 12);
 
 %% Horizontal colorbar drawn as an imagesc gradient in the bottom strip
 clim_vals = color_limits;
@@ -146,13 +146,13 @@ if isempty(clim_vals)
     clim_vals = [min(SS_PSTHs_all(:)), max(SS_PSTHs_all(:))] ./ FPS;
 end
 n     = 256;
-cb_ax = axes(f, 'Position', [0.20, 0.02, 0.60, 0.04]);
+cb_ax = axes(f, 'Position', [0.42, 0.06, 0.50, 0.02]);
 imagesc(cb_ax, linspace(clim_vals(1), clim_vals(2), n), 1, (1:n));
 colormap(cb_ax, cmap);
 cb_ax.YTick    = [];
 cb_ax.XLim     = clim_vals;
 cb_ax.TickDir  = 'out';
-cb_ax.FontSize = 9;
+cb_ax.FontSize = 10;
 xlabel(cb_ax, ['p(' behavior ')'], 'FontSize', 10);
 
 %% Save (optional — only if both SavePath and SaveFormat are provided)

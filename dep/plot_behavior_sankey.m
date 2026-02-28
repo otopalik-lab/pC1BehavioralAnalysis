@@ -288,14 +288,14 @@ end
 %% ═══════════════════════════════════════════════════════════════════════════
 function behavColors = get_behavior_colors(behaviors)
 
-known_behaviors = {'proximal','notmoving','pursuit','approach','fixation', ...
+known_behaviors = {'close','still','chase','approach','orient', ...
                    'unilateralwing','wingflick','aggression','boxing', ...
                    'headbutt','tussle'};
-known_colors    = [0.9961 0.3804 0.0000;   % proximal        #FE6100  orange
-                   0.2745 0.3922 1.0000;   % notmoving                 blue
-                   0.8627 0.1490 0.4980;   % pursuit                   magenta
+known_colors    = [0.9961 0.3804 0.0000;   % close        #FE6100  orange
+                   0.2745 0.3922 1.0000;   % still                 blue
+                   0.8627 0.1490 0.4980;   % chase                   magenta
                    0.0000 0.7490 0.6863;   % approach                  teal
-                   0.9843 0.7647 0.0000;   % fixation                  yellow
+                   0.9843 0.7647 0.0000;   % orient                  yellow
                    0.3922 0.5608 1.0000;   % unilateralwing  #648FFF  blue
                    0.5490 0.2745 0.0784;   % wingflick                 brown
                    0.8627 0.1490 0.4980;   % aggression      #DC267F  magenta
@@ -451,7 +451,7 @@ for c = 1:nCT
     rectangle('Position', [xLeft - nodeW, yLeft(c) - hw, nodeW, totalLeft(c)], ...
         'FaceColor', [0.3 0.3 0.3], 'EdgeColor', 'none');
     text(xLeft - nodeW - 0.01, yLeft(c), cellTypes{c}, ...
-        'HorizontalAlignment', 'right', 'FontSize', 8, 'Color', 'k');
+        'HorizontalAlignment', 'right', 'FontSize', 12, 'Color', 'k');
 end
 
 % Right node bars (behaviors)
@@ -461,7 +461,7 @@ for b = 1:nB
     rectangle('Position', [xRight, yRight(b) - hw, nodeW, totalRight(b)], ...
         'FaceColor', behavColors(b, :), 'EdgeColor', 'none');
     text(xRight + nodeW + 0.01, yRight(b), strrep(behaviors{b}, '_', ' '), ...
-        'HorizontalAlignment', 'left', 'FontSize', 10, 'FontWeight', 'bold', ...
+        'HorizontalAlignment', 'left', 'FontSize', 12, 'FontWeight', 'bold', ...
         'Color', behavColors(b, :));
 end
 
@@ -501,7 +501,7 @@ for k = 1:nLeg
         'FontSize', 14, 'VerticalAlignment', 'middle', 'Parent', ax_l);
 end
 
-text(0.5, 0.93, 'p(behavior)', 'HorizontalAlignment', 'center', ...
+text(0.5, 0.6, 'p(behavior)', 'HorizontalAlignment', 'center', ...
     'FontSize', 14, 'FontWeight', 'bold', 'Parent', ax_l);
 
 end
