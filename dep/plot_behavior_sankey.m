@@ -401,11 +401,26 @@ scaleHW = maxHW / max(meanZ(:));
 
 %% Layout coordinates
 xLeft  = 0;   xRight = 1;
-yLeft  = linspace(0, 1, nCT);
+yLeft  = linspace(0.08, 0.92, nCT);    % slightly reduced range for less spacing
 yRight = linspace(0.15, 0.85, nB);
 
 totalLeft  = sum(meanZ * scaleHW, 2);   % total stacked ribbon height per CT
 totalRight = sum(meanZ * scaleHW, 1)';  % total stacked ribbon height per behavior
+
+% Resolve vertical overlaps between right nodes (bottom-to-top sweep)
+minGap = 0.02;   % minimum gap between adjacent right-node edges
+for b = 2:nB
+    prevTop = yRight(b-1) + totalRight(b-1)/2;
+    curBot  = yRight(b)   - totalRight(b)/2;
+    if curBot < prevTop + minGap
+        yRight(b) = prevTop + minGap + totalRight(b)/2;
+    end
+end
+% If the top node was pushed beyond the plot limits, shift all right nodes down
+if nB > 0 && (yRight(nB) + totalRight(nB)/2) > 1.05
+    overshoot = (yRight(nB) + totalRight(nB)/2) - 1.05;
+    yRight    = yRight - overshoot;
+end
 
 %% ── Main Sankey figure ───────────────────────────────────────────────────────
 fig  = figure('Color', 'w', 'Position', [600 100 900 1000]);
