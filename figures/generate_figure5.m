@@ -9,38 +9,22 @@ SavePath = '/Users/otopalika/Documents/GitHub/pC1BehavioralAnalysis/results/figu
 %% Load Data and Metadata to for Base Workspace:
 
 addpath(genpath('/Users/otopalika/Documents/GitHub/pC1BehavioralAnalysis'));
+
+% Load Isolated Male Activation Data
+load('/Users/otopalika/Documents/GitHub/P1ScreenAnalysis/results/SingleMaleSong2/compiledActivationData_SMS2_v6_5secStimuli_PulseSineRatesOnly.mat');
+data_activation = data;
+
+% Load Courting Male Activation Data
+load('/Users/otopalika/Documents/GitHub/P1ScreenAnalysis/results/MaleFemalePairSong_Chrimson/compiledData_MFPChrimson_v5.mat');
+data_MFP_activation = data;
+
+% Load Courting Male Silencing Data
+load('/Users/otopalika/Documents/GitHub/P1ScreenAnalysis/results/MaleFemalePairSong/compiledSilencingData_v9_SongRatesOnly.mat'); % this has only song rates and idx data (1/1)
+data_silence = data;
+
 load('MaleMaleBehavior_new.mat'); % load workspace with pre-generated data and randomly selected trials (SSinds) for each stable split line, for reproducible figures:
 selectedLines = table2struct(readtable('SSLines_withCelltypes.csv')); % Load line and celltype lists
 lines = {selectedLines.Var1}; lines = lines([1 3:35]);
 celltypes = {selectedLines.Var2}; celltypes = celltypes([1 3:35])
 
-%% Fig 5A: Example of LED stimulus-aligned rasters of unilateral wing events, aggression events, and interfly distance for one example chamber:
-
-plot_behavior_fullTimeseries('SS102671',{'unilateralwing', 'aggression'})
-
-%% Figure 5B: Plot LED stimulus-aligned rasters, PSTHs, and Inter-fly Distances for Selected Lines
-
-plot_behavior_STA('Empty Split',{'unilateralwing', 'aggression'});
-plot_behavior_STA('SS03661',{'unilateralwing', 'aggression'});
-plot_behavior_STA('SS106638',{'unilateralwing', 'aggression'});
-plot_behavior_STA('SS102671',{'unilateralwing', 'aggression'});
-plot_behavior_STA('SS100424',{'unilateralwing', 'aggression'});
-plot_behavior_STA('SS59911',{'unilateralwing', 'aggression'});
-
-%% Figure 5C: Heatmaps of behavioral probabilities over time across all pC1 SS Lines for selected behavioral classes:
-
-binsize = 1000; %in milliseconds
-plot_PSTH_heatmap('all','close', binsize) %'proximal is equivalent to 'close' in the paper
-plot_PSTH_heatmap('all','unilateralwing', binsize)  
-plot_PSTH_heatmap('all','aggression',binsize)  
-
-%% Figure 5D: 2-bin (30-sec each) Heatmaps of behavioral probabilities with p-value annotations all pC1 SS Lines for selected behavioral classes:
-
-plot_2bin_heatmap('all','close') %'proximal is equivalent to 'close' in the paper
-plot_2bin_heatmap('all','proximal') %'proximal is equivalent to 'close' in the paper
-plot_2bin_heatmap('all','unilateralwing')
-plot_2bin_heatmap('all','aggression')
-
-%% Figure 5E: Sankey Diagrams for LED Stimulation and Post-Stimulation Periods:
-
-plot_behavior_sankey('all', {'proximal','aggression','unilateralwing'}, false)
+%% Fig 5A: 
