@@ -468,8 +468,8 @@ end
 title(titleStr, 'FontSize', 12, 'FontWeight', 'bold', 'Interpreter', 'tex');
 
 %% ── Ribbon-width legend (inset axes, lower-right of main figure) ─────────────
-% Fixed reference probability values so labels read exactly 0.25/0.50/0.75/1.00.
-legendProbs = [0.25 0.50 0.75 1.00];
+% Fixed reference probability values.
+legendProbs = [0.10 0.25 0.50 0.75 1.00];
 nLeg        = numel(legendProbs);
 
 leg_pos = [0.80 0.03 0.17 0.24];
@@ -489,7 +489,7 @@ leg_ppu    = leg_pos(4)     / diff(ax_l.YLim);  % legend axes
 hw_scale   = sankey_ppu / leg_ppu;
 
 lx0  = 0.05;  lx1 = 0.60;
-lgap = 0.70 / nLeg;
+lgap = 0.70 / nLeg / 2;   % half-spacing between entries
 
 for k = 1:nLeg
     ly  = 0.12 + (k - 0.5) * lgap;
@@ -498,10 +498,10 @@ for k = 1:nLeg
          [repmat(ly + lhw, 1, 40), repmat(ly - lhw, 1, 40)], ...
          [0 0 0], 'EdgeColor', 'none', 'FaceAlpha', 0.6, 'Parent', ax_l);
     text(lx1 + 0.06, ly, sprintf('%.2f', legendProbs(k)), ...
-        'FontSize', 7, 'VerticalAlignment', 'middle', 'Parent', ax_l);
+        'FontSize', 14, 'VerticalAlignment', 'middle', 'Parent', ax_l);
 end
 
 text(0.5, 0.93, 'p(behavior)', 'HorizontalAlignment', 'center', ...
-    'FontSize', 8, 'FontWeight', 'bold', 'Parent', ax_l);
+    'FontSize', 14, 'FontWeight', 'bold', 'Parent', ax_l);
 
 end
