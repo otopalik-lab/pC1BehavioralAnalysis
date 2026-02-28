@@ -1,5 +1,5 @@
 % This script regenerates all of the plots that comprise Figure Supplement
-% 5. Extended Description of Behavioral Phenotypes during Male-Male
+% 6. Extended Description of Behavioral Phenotypes during Male-Male
 % Interactions across pC1 driver lines.
 
 %% Settings for Saving Plots:
@@ -15,7 +15,7 @@ selectedLines = table2struct(readtable('SSLines_withCelltypes.csv')); % Load SS 
 lines = {selectedLines.Var1}; lines = lines([1 3:35]);
 celltypes = {selectedLines.Var2}; celltypes = celltypes([1 3:35]);
 
-%% Figure S5A: Heatmaps of behavioral probabilities over time across all pC1 SS Lines for all behavioral classes:
+%% Figure S6A: Heatmaps of behavioral probabilities over time across all pC1 SS Lines for all behavioral classes:
 
 binsize = 1000; %in milliseconds
 plot_PSTH_heatmap('all','proximal', binsize) %'proximal is equivalent to 'close' in the paper
@@ -29,7 +29,7 @@ plot_PSTH_heatmap('all','boxing',binsize)
 plot_PSTH_heatmap('all','headbutt',binsize)  
 plot_PSTH_heatmap('all','wingflick',binsize)  
 
-%% Figure 5SB: 2-bin (30-sec each) Heatmaps of behavioral probabilities with p-value annotations all pC1 SS Lines for all behavioral classes:
+%% Figure 6SB: 2-bin (30-sec each) Heatmaps of behavioral probabilities with p-value annotations all pC1 SS Lines for all behavioral classes:
 
 plot_2bin_heatmap('all','proximal', binsize) %'proximal is equivalent to 'close' in the paper
 plot_2bin_heatmap('all','notmoving', binsize)  
@@ -42,7 +42,7 @@ plot_2bin_heatmap('all','boxing',binsize)
 plot_2bin_heatmap('all','headbutt',binsize)  
 plot_2bin_heatmap('all','wingflick',binsize)  
 
-%% Figure 5SC-D: Sankey Diagrams for LED Stimulation and Post-Stimulation Periods, all behavioral classes:
+%% Figure 6SC-D: Sankey Diagrams for LED Stimulation and Post-Stimulation Periods, all behavioral classes:
 
 plot_behavior_sankey('all', {'proximal','notmoving','pursuit','approach','fixation',...
     'unilateralwing','tussle','boxing','headbutt','wingflick'}, false)

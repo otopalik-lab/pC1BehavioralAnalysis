@@ -122,7 +122,7 @@ end
 
 % Title on first raster subplot
 subplot(numSubplots, 1, 1);
-title(labels{line_idx}, 'FontSize', 11, 'Interpreter', 'none');
+title(erase(labels{line_idx}, '\'), 'FontSize', 11, 'Interpreter', 'none');
 
 %% Subplot numBehaviors+1: Combined PSTH (one trace per behavior)
 subplot(numSubplots, 1, numBehaviors + 1); hold on;
