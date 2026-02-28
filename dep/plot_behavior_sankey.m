@@ -244,18 +244,16 @@ end
 behavColors = get_behavior_colors(behaviors);
 
 %% ── Plot Sankey diagrams ─────────────────────────────────────────────────────
-[fig_on,  fig_leg_on]  = plot_sankey(links_LEDON,  behaviors, behavColors, ...
+fig_on  = plot_sankey(links_LEDON,  behaviors, behavColors, ...
     'LED ON: SS Line \rightarrow Behavioral Outputs',  normalize);
-[fig_off, fig_leg_off] = plot_sankey(links_LEDOFF, behaviors, behavColors, ...
+fig_off = plot_sankey(links_LEDOFF, behaviors, behavColors, ...
     'LED OFF: SS Line \rightarrow Behavioral Outputs', normalize);
 
 %% ── Save figures ─────────────────────────────────────────────────────────────
 if nargin == 5 && ~isempty(SavePath) && ~isempty(SaveFormat)
     if ~exist(SavePath, 'dir'), mkdir(SavePath); end
-    saveas(fig_on,      fullfile(SavePath, ['SankeyDiagram_LEDON'  norm_tag SaveFormat]));
-    saveas(fig_leg_on,  fullfile(SavePath, ['SankeyLegend_LEDON'   norm_tag SaveFormat]));
-    saveas(fig_off,     fullfile(SavePath, ['SankeyDiagram_LEDOFF' norm_tag SaveFormat]));
-    saveas(fig_leg_off, fullfile(SavePath, ['SankeyLegend_LEDOFF'  norm_tag SaveFormat]));
+    saveas(fig_on,  fullfile(SavePath, ['SankeyDiagram_LEDON'  norm_tag SaveFormat]));
+    saveas(fig_off, fullfile(SavePath, ['SankeyDiagram_LEDOFF' norm_tag SaveFormat]));
     fprintf('plot_behavior_sankey: figures saved to %s\n', SavePath);
 end
 
@@ -335,18 +333,17 @@ end
 %% ═══════════════════════════════════════════════════════════════════════════
 %  LOCAL  plot_sankey
 %     Draw a Sankey diagram from a connection array.
-%     Returns handles to the main Sankey figure and a ribbon-width legend
-%     figure.
+%     Returns a handle to the Sankey figure; the ribbon-width legend is
+%     embedded as an inset axes in the lower-right corner of that figure.
 %% ═══════════════════════════════════════════════════════════════════════════
-function [fig, fig_leg] = plot_sankey(raw, behaviors, behavColors, titleStr, normalize)
+function fig = plot_sankey(raw, behaviors, behavColors, titleStr, normalize)
 
 nB = numel(behaviors);
 
 %% Guard: empty connections
 if isempty(raw)
-    fig     = figure('Color', 'w');
-    fig_leg = figure('Color', 'w');
-    figure(fig); axis off;
+    fig = figure('Color', 'w');
+    axis off;
     title(titleStr, 'FontSize', 12, 'FontWeight', 'bold', 'Interpreter', 'tex');
     text(0.5, 0.5, 'No significant connections found.', ...
         'HorizontalAlignment', 'center', 'Units', 'normalized');
@@ -390,9 +387,8 @@ meanZ     = meanZ(hasConn, :);
 nCT       = numel(cellTypes);
 
 if nCT == 0
-    fig     = figure('Color', 'w');
-    fig_leg = figure('Color', 'w');
-    figure(fig); axis off;
+    fig = figure('Color', 'w');
+    axis off;
     title(titleStr, 'FontSize', 12, 'FontWeight', 'bold', 'Interpreter', 'tex');
     text(0.5, 0.5, 'No significant connections found.', ...
         'HorizontalAlignment', 'center', 'Units', 'normalized');
@@ -471,36 +467,33 @@ end
 
 title(titleStr, 'FontSize', 12, 'FontWeight', 'bold', 'Interpreter', 'tex');
 
-%% ── Ribbon-width legend (separate figure, matching original layout) ────────────
-fig_leg = figure('Color', 'w', 'Position', [1100 100 200 1000]);
-ax_l    = axes('Position', [0.05 0.05 0.90 0.90]);
-hold on; axis off;
+%% ── Ribbon-width legend (inset axes, lower-right of main figure) ─────────────
+% Reference probabilities span 25 % – 100 % of the plotted maximum.
+% Display half-widths are proportional and sized to be legible in the inset.
+maxP        = max(meanZ(:));
+legendProbs = maxP * [0.25 0.5 0.75 1.0];
+dispHWs     = [0.022 0.044 0.066 0.088];   % proportional display half-widths
+nLeg        = numel(legendProbs);
+
+ax_l = axes('Parent', fig, 'Position', [0.80 0.03 0.17 0.24]);
+hold(ax_l, 'on');
+axis(ax_l, 'off');
 ax_l.XLim = [0 1];
 ax_l.YLim = [0 1];
 
-legendZ = [1 2 3 4 5 6];           % reference z-score values (as in original)
-nLeg    = numel(legendZ);
-lgap    = 1 / (nLeg + 1);
-lx0     = 0.05;  lx1 = 0.55;
+lx0  = 0.05;  lx1 = 0.60;
+lgap = 0.70 / nLeg;
 
 for k = 1:nLeg
-    lhw = legendZ(k) * scaleHW;
-    ly  = k * lgap;
-    t   = linspace(0, 1, 40);
+    ly = 0.12 + (k - 0.5) * lgap;
     fill([linspace(lx0, lx1, 40), linspace(lx1, lx0, 40)], ...
-         [repmat(ly + lhw, 1, 40), repmat(ly - lhw, 1, 40)], ...
+         [repmat(ly + dispHWs(k), 1, 40), repmat(ly - dispHWs(k), 1, 40)], ...
          [0 0 0], 'EdgeColor', 'none', 'FaceAlpha', 0.6, 'Parent', ax_l);
-    if normalize
-        text(lx1 + 0.05, ly, sprintf('%.2g', legendZ(k) * scaleHW / maxHW), ...
-            'FontSize', 8, 'VerticalAlignment', 'middle', 'Parent', ax_l);
-    else
-        text(lx1 + 0.05, ly, sprintf('z = %d', legendZ(k)), ...
-            'FontSize', 8, 'VerticalAlignment', 'middle', 'Parent', ax_l);
-    end
+    text(lx1 + 0.06, ly, sprintf('%.2f', legendProbs(k)), ...
+        'FontSize', 7, 'VerticalAlignment', 'middle', 'Parent', ax_l);
 end
-text(0.05, (nLeg + 0.8) * lgap, 'z-score', ...
-    'FontSize', 9, 'FontWeight', 'bold', 'Parent', ax_l);
-title('Cell Type Contributions to Behavioral Outputs', ...
-    'FontSize', 8, 'FontWeight', 'bold');
+
+text(0.5, 0.93, 'p(behavior)', 'HorizontalAlignment', 'center', ...
+    'FontSize', 8, 'FontWeight', 'bold', 'Parent', ax_l);
 
 end
