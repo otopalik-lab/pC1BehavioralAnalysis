@@ -2,19 +2,19 @@ This repository contains code for the processing and analysis of behavioral data
 
 ## Getting Started
 
-1. After cloning this repository, users must download the figure source data and place this folder (figure_source_data) in the repository's main directory (.../pC1_BehavioralAnalysis/figure_source_data)
+1. After cloning this repository, users must download the figure source data and place this folder (data) in the repository's main directory (.../pC1_BehavioralAnalysis/data)
 
 2. Prior to running any scripts in MATLAB, the repository must be added to the MATLAB path: addpath(genpath('.../pC1_BehavioralAnalysis))
 
 3. The user can then run any of the scripts situated in the figures directory to regenerate Figures 5, 6 and associated supplements.
 
-4. The user can also access and download the raw song recordings and song type classifications (constituting Figure 4 and associated supplements), as well as the animal tracking and behavioral classification data (constituting Figure 5 and associated supplements) at [insert link here]. The user can then employ scripts in processing_code to process these data for regeneration of the figure source data folder. 
+4. The user can also access and download the raw song recordings and song type classifications (constituting Figure 5 and associated supplements), as well as the animal tracking and behavioral classification data (constituting Figure 6 and associated supplements) at [insert link here]. The user can then employ scripts in processing_code to process these data for regeneration of the figure source data folder. 
 
 ## Repository Contents
 
 | Folder             | Description                                                                                                                                                                                                                                           |
 |--------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| figure_source_data |   This must be downloaded from [insert link here] and contains the workspaces and associated metadata to generate Figures. By default, this directory is only stored locally and listed in .gitignore                                                 |
+| data |   This must be downloaded from [insert link here] and contains the workspaces and associated metadata to generate Figures. By default, this directory is only stored locally and listed in .gitignore                                                 |
 | figures            |   These scripts regenerate the contents of Figures 5, 6, and associated supplements. They depend on the functions in the 'dep' directory.                                                                                                             |
 | results            |   If 'save' is set to 'True' in any of the figures scripts, the plots will be saved in the this directory, in the specified folder. By, default is the figures will not be saved and this directory is only stored locally and listed in .gitignore.  |                           
 | processing_code    |   This code regenerates the figure_src_data from the raw song recordings and song types classifications, as well as animal tracking and behavioral classifications.                                                                                   |
