@@ -122,31 +122,32 @@ switch behavior
         try; cmap = evalin('base', 'orange_map');  catch; end
 end
 
-%% Plot heatmap with imagesc
-% imagesc() on a plain axes avoids the TiledChartLayout that heatmap()
-% installs, so a second axes for the colorbar can be placed freely below.
-f  = figure('Position', [1000 500 280 600]);
-ax = axes(f, 'Position', [0.40, 0.10, 0.55, 0.87]);
-imagesc(ax, SS_PSTHs_all ./ FPS);
-colormap(ax, cmap);
+%% Plot heatmap
+f = figure('Position', [1000 500 280 600], 'Name', ['p(' behavior ')']);
+h = heatmap(SS_PSTHs_all ./ FPS);
+h.GridVisible     = 'off';
+h.YDisplayLabels  = labels(line_inds);
+h.XDisplayLabels  = repmat(' ', size(SS_PSTHs_all, 2), 1);
+h.Title           = ['p(' behavior ')'];
+h.FontSize        = 7;
+h.ColorbarVisible = 'off';
+h.Colormap        = cmap;
 if ~isempty(color_limits)
-    caxis(ax, color_limits);
+    h.ColorLimits = color_limits;
 end
-ax.YTick                = 1:numSelected;
-ax.YTickLabel           = labels(line_inds);
-ax.TickLabelInterpreter = 'none';
-ax.XTick                = [];
-ax.FontSize             = 7;
-ax.TickDir              = 'out';
-title(ax, strrep(behavior, '_', ' '), 'FontSize', 9);
 
 %% Horizontal colorbar drawn as an imagesc gradient in the bottom strip
+% Avoids all HeatmapChart layout-manager restrictions (same strategy as
+% plot_2bin_heatmap.m). Accessing the internal axes via struct() unlocks
+% the figure for the subsequent axes() call.
+ax_hm = struct(h).Axes;
+hold(ax_hm, 'on');
 clim_vals = color_limits;
 if isempty(clim_vals)
     clim_vals = [min(SS_PSTHs_all(:)), max(SS_PSTHs_all(:))] ./ FPS;
 end
 n     = 256;
-cb_ax = axes(f, 'Position', [0.20, 0.02, 0.60, 0.04]);
+cb_ax = axes(f, 'Position', [0.20, 0.06, 0.60, 0.04]);
 imagesc(cb_ax, linspace(clim_vals(1), clim_vals(2), n), 1, (1:n));
 colormap(cb_ax, cmap);
 cb_ax.YTick    = [];
