@@ -1,6 +1,6 @@
-function prep_sankey_data(ss_lines, behaviors, normalize, SavePath, SaveFormat)
-% PREP_SANKEY_DATA  Compute behavioral probabilities from LED stimulation
-%                   epochs and render LED-ON / LED-OFF Sankey diagrams.
+function plot_behavior_sankey(ss_lines, behaviors, normalize, SavePath, SaveFormat)
+% PLOT_BEHAVIOR_SANKEY  Compute behavioral probabilities from LED stimulation
+%                         epochs and render LED-ON / LED-OFF Sankey diagrams.
 %
 %   SOURCE NODES  : SS genetic driver lines
 %   TARGET NODES  : behavioral outputs
@@ -33,8 +33,8 @@ function prep_sankey_data(ss_lines, behaviors, normalize, SavePath, SaveFormat)
 %   Lines failing the criterion are excluded as source nodes.
 %
 % ── EXAMPLES ─────────────────────────────────────────────────────────────────
-%   prep_sankey_data({'SS02569','SS25349'}, {'proximal','aggression'}, false)
-%   prep_sankey_data('all', {'proximal','aggression'}, true, '/save/path', '.pdf')
+%   plot_behavior_sankey({'SS02569','SS25349'}, {'proximal','aggression'}, false)
+%   plot_behavior_sankey('all', {'proximal','aggression'}, true, '/save/path', '.pdf')
 
 %% ── Hard-coded analysis parameters ──────────────────────────────────────────
 binsize  = 30000;   % PSTH bin size in ms → 2 bins of 30 s (ON, OFF)
@@ -62,23 +62,23 @@ end
 % Auto-detect by looking for the word "empty" (case-insensitive) in labels.
 empty_idx = find(cellfun(@(s) contains(lower(s), 'empty'), labels));
 if isempty(empty_idx)
-    warning('prep_sankey_data: No label containing Empty found. All selected lines with any activity will be shown.');
+    warning('plot_behavior_sankey: No label containing Empty found. All selected lines with any activity will be shown.');
     useANOVA = false;
 else
     if numel(empty_idx) > 1
-        warning('prep_sankey_data: Multiple "Empty" matches found; using index %d (%s).', ...
+        warning('plot_behavior_sankey: Multiple "Empty" matches found; using index %d (%s).', ...
             empty_idx(1), labels{empty_idx(1)});
         empty_idx = empty_idx(1);
     end
     useANOVA = true;
-    fprintf('prep_sankey_data: using "%s" (index %d) as empty-vector control.\n', ...
+    fprintf('plot_behavior_sankey: using "%s" (index %d) as empty-vector control.\n', ...
         labels{empty_idx}, empty_idx);
 end
 
 %% ── Validate behavior field names ────────────────────────────────────────────
 for b = 1:numel(behaviors)
     if ~ismember(behaviors{b}, fieldNames)
-        error('prep_sankey_data: field "%s" not found in MaleMaleData.', behaviors{b});
+        error('plot_behavior_sankey: field "%s" not found in MaleMaleData.', behaviors{b});
     end
 end
 nBeh = numel(behaviors);
@@ -87,7 +87,7 @@ nBeh = numel(behaviors);
 if isnumeric(ss_lines)
     line_inds = ss_lines(:)';
     if any(line_inds < 1) || any(line_inds > numLines)
-        error('prep_sankey_data: numeric indices must be in [1, %d].', numLines);
+        error('plot_behavior_sankey: numeric indices must be in [1, %d].', numLines);
     end
 elseif ischar(ss_lines) && strcmp(ss_lines, 'all')
     line_inds = 1:numLines;
@@ -97,10 +97,10 @@ else
     for ii = 1:numel(ss_lines)
         m = find(contains(labels, ss_lines{ii}));
         if isempty(m)
-            error('prep_sankey_data: SS line "%s" not found in labels.', ss_lines{ii});
+            error('plot_behavior_sankey: SS line "%s" not found in labels.', ss_lines{ii});
         end
         if numel(m) > 1
-            warning('prep_sankey_data: multiple matches for "%s"; using index %d.', ...
+            warning('plot_behavior_sankey: multiple matches for "%s"; using index %d.', ...
                 ss_lines{ii}, m(1));
         end
         line_inds(ii) = m(1);
@@ -176,7 +176,7 @@ for bi = 1:nBeh
             other_on(swap)      = comp_on(swap, 1);
             sig_global_on       = other_on(comp_on(:, 6) < 0.05);
         catch ME
-            warning('prep_sankey_data: ANOVA failed for "%s" (LED ON): %s', ...
+            warning('plot_behavior_sankey: ANOVA failed for "%s" (LED ON): %s', ...
                 behaviors{bi}, ME.message);
             sig_global_on = [];
         end
@@ -193,7 +193,7 @@ for bi = 1:nBeh
             other_off(swap)     = comp_off(swap, 1);
             sig_global_off      = other_off(comp_off(:, 6) < 0.05);
         catch ME
-            warning('prep_sankey_data: ANOVA failed for "%s" (LED OFF): %s', ...
+            warning('plot_behavior_sankey: ANOVA failed for "%s" (LED OFF): %s', ...
                 behaviors{bi}, ME.message);
             sig_global_off = [];
         end
@@ -237,7 +237,7 @@ if doSave
     save(fullfile(SavePath, ['LEDON'  norm_tag '_cxn_array.mat']), 'cxn_array');
     cxn_array = links_LEDOFF;
     save(fullfile(SavePath, ['LEDOFF' norm_tag '_cxn_array.mat']), 'cxn_array');
-    fprintf('prep_sankey_data: connection arrays saved to %s\n', SavePath);
+    fprintf('plot_behavior_sankey: connection arrays saved to %s\n', SavePath);
 end
 
 %% ── Assign colors per behavior ───────────────────────────────────────────────
@@ -256,7 +256,7 @@ if nargin == 5 && ~isempty(SavePath) && ~isempty(SaveFormat)
     saveas(fig_leg_on,  fullfile(SavePath, ['SankeyLegend_LEDON'   norm_tag SaveFormat]));
     saveas(fig_off,     fullfile(SavePath, ['SankeyDiagram_LEDOFF' norm_tag SaveFormat]));
     saveas(fig_leg_off, fullfile(SavePath, ['SankeyLegend_LEDOFF'  norm_tag SaveFormat]));
-    fprintf('prep_sankey_data: figures saved to %s\n', SavePath);
+    fprintf('plot_behavior_sankey: figures saved to %s\n', SavePath);
 end
 
 end  % ══════════════════════════════ end main ══════════════════════════════════
