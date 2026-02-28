@@ -42,12 +42,15 @@ plot_2bin_heatmap('all','aggression')
 
 %% Figure 5E: Sankey Diagrams for LED Stimulation and Post-Stimulation Periods:
 
-% new change here
+prep_sankey_data('all', {'proximal','unilateralwing','aggression'}, false)
+
 
 
 % Below is to train Claude:
 
 %% Generate Behavioral Probilities for Sankey Diagram
+
+%close all
 
 % LED EPOCHS:
 [LED_epochs,LED_durs] = detect_binarybouts(MaleMaleData(1).LED);
@@ -132,15 +135,49 @@ for b = classifier_list
         % Uncomment for Percent Time Method
         % LEDon_mat(:,i) = pcttime_bytrial_on;
         % LEDoff_mat(:,i) = pcttime_bytrial_off;
+
+
+        
     end
     
+
+    % generate matrix for heatmap plot:
+    %heatmap_mat = [mean(LEDon_mat)' mean(LEDoff_mat)'];
+    heatmap_mat = SS_PSTHs_allLines(:,1:2);
+
+    % Statistics for LED on and LED off conditions:
+    % LED ON
+    [p,t,stats] = anova1(LEDon_mat,labels); close;
+    [results,~,~,gnames] = multcompare(stats, 'CriticalValueType', "dunn-sidak", "Alpha", 0.01); close;
+    %[results,~,~,gnames] = multcompare(stats, 'CriticalValueType', "bonferroni"); 
+    ES_idx = find(strcmp(labels, '3047597 | Empty'));
+    comps = results(find(results(:,1)==ES_idx | results(:,2)==ES_idx),:); 
+    sig_pvals = find(comps(:,6)<0.05)+1;  % comparisons will be ordered from lines 2:34 (ES is line 1). Thus, add 1 to get the line label.
+    sig_lines = labels(sig_pvals);
+    significant_lines{1} = sig_lines;
+    significant_lines_allbehaviors_LEDON{counter} = sig_pvals; % add to array for Sankey Diagram
+    % LED OFF
+    [p,t,stats] = anova1(LEDoff_mat,labels); close; 
+    [results,~,~,gnames] = multcompare(stats, 'CriticalValueType', "dunn-sidak", "Alpha", 0.01);  close;
+    %[results,~,~,gnames] = multcompare(stats, 'CriticalValueType', "bonferroni"); close;
+    ES_idx = find(strcmp(labels, '3047597 | Empty'));
+    comps = results(find(results(:,1)==ES_idx | results(:,2)==ES_idx),:);
+    sig_pvals = find(comps(:,6)<0.05)+1;  % comparisons will be ordered from lines 2:34 (ES is line 1). Thus, add 1 to get the line label.
+    sig_lines = labels(sig_pvals);
+    significant_lines{2} = sig_lines;
+    significant_lines_allbehaviors_LEDOFF{counter} = sig_pvals; 
+
     % Build probability matrices for Sankey Diagram:
 
     behav_probs_LEDON(:,counter) = SS_PSTHs_allLines(:,1);
     behav_probs_LEDOFF(:,counter) = SS_PSTHs_allLines(:,2);
+
+
     counter = counter+1;
 
+
 end
+
 
 %% Prep Data for Sankey Diagram (use p(behaviors) and only include sig p values):
 
