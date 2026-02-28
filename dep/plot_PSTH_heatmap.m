@@ -107,41 +107,53 @@ for idx = 1:numSelected
     SS_PSTHs_all(idx, :) = psth_temp; %#ok<AGROW>
 end
 
-%% Plot heatmap
-f = figure('Position', [1000 500 250 600]);
-h = heatmap(SS_PSTHs_all ./ FPS);
-h.GridVisible     = 'off';
-h.YDisplayLabels  = labels(line_inds);
-h.XDisplayLabels  = repmat(' ', size(SS_PSTHs_all, 2), 1);
-h.Title           = strrep(behavior, '_', ' ');
-h.ColorbarVisible = 'off';
-
-% Behavior-specific colormap and color limits
-% Falls back to grayscale if the workspace colormap variable is missing
+%% Determine colormap and color limits (resolved before plotting)
+% Falls back to flipud(gray) if the workspace colormap variable is missing.
+cmap         = flipud(gray);   % default colormap
+color_limits = [];             % empty → auto-scale
 switch behavior
     case 'unilateralwing'
-        try
-            h.Colormap = evalin('base', 'blue_map');
-        catch
-            h.Colormap = flipud(gray);
-        end
-        h.ColorLimits = [0 0.5];
+        try; cmap = evalin('base', 'blue_map');    catch; end
+        color_limits = [0 0.5];
     case 'aggression'
-        try
-            h.Colormap = evalin('base', 'magenta_map');
-        catch
-            h.Colormap = flipud(gray);
-        end
-        h.ColorLimits = [0 0.5];
+        try; cmap = evalin('base', 'magenta_map'); catch; end
+        color_limits = [0 0.5];
     case 'proximal'
-        try
-            h.Colormap = evalin('base', 'orange_map');
-        catch
-            h.Colormap = flipud(gray);
-        end
-    otherwise
-        h.Colormap = flipud(gray);
+        try; cmap = evalin('base', 'orange_map');  catch; end
 end
+
+%% Plot heatmap with imagesc
+% imagesc() on a plain axes avoids the TiledChartLayout that heatmap()
+% installs, so a second axes for the colorbar can be placed freely below.
+f  = figure('Position', [1000 500 280 600]);
+ax = axes(f, 'Position', [0.40, 0.10, 0.55, 0.87]);
+imagesc(ax, SS_PSTHs_all ./ FPS);
+colormap(ax, cmap);
+if ~isempty(color_limits)
+    caxis(ax, color_limits);
+end
+ax.YTick                = 1:numSelected;
+ax.YTickLabel           = labels(line_inds);
+ax.TickLabelInterpreter = 'none';
+ax.XTick                = [];
+ax.FontSize             = 7;
+ax.TickDir              = 'out';
+title(ax, strrep(behavior, '_', ' '), 'FontSize', 9);
+
+%% Horizontal colorbar drawn as an imagesc gradient in the bottom strip
+clim_vals = color_limits;
+if isempty(clim_vals)
+    clim_vals = [min(SS_PSTHs_all(:)), max(SS_PSTHs_all(:))] ./ FPS;
+end
+n     = 256;
+cb_ax = axes(f, 'Position', [0.20, 0.02, 0.60, 0.04]);
+imagesc(cb_ax, linspace(clim_vals(1), clim_vals(2), n), 1, (1:n));
+colormap(cb_ax, cmap);
+cb_ax.YTick    = [];
+cb_ax.XLim     = clim_vals;
+cb_ax.TickDir  = 'out';
+cb_ax.FontSize = 9;
+xlabel(cb_ax, ['p(' behavior ')'], 'FontSize', 10);
 
 %% Save (optional — only if both SavePath and SaveFormat are provided)
 if nargin == 5
