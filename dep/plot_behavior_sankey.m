@@ -298,10 +298,10 @@ known_colors    = [0.9961 0.3804 0.0000;   % proximal
                    0.9843 0.7647 0.0000;   % fixation
                    0.5569 0.1686 0.8863;   % unilateralwing
                    0.4706 0.8235 0.0863;   % wingflick
-                   0.9412 0.1765 0.1765;   % aggression
-                   0.2000 0.7216 0.9608;   % boxing
-                   0.9608 0.7020 0.2314;   % headbutt
-                   0.5000 0.5000 0.5000];  % tussle
+                   0.5000 0.5000 0.5000;   % aggression  (not in original; neutral gray)
+                   0.9412 0.1765 0.1765;   % boxing
+                   0.2000 0.7216 0.9608;   % headbutt
+                   0.9608 0.7020 0.2314];  % tussle
 
 % Fallback palette for behaviors not in the list above
 fallback = [0.1216 0.4706 0.7059;
