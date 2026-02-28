@@ -468,26 +468,34 @@ end
 title(titleStr, 'FontSize', 12, 'FontWeight', 'bold', 'Interpreter', 'tex');
 
 %% ── Ribbon-width legend (inset axes, lower-right of main figure) ─────────────
-% Reference probabilities span 25 % – 100 % of the plotted maximum.
-% Display half-widths are proportional and sized to be legible in the inset.
+% Half-widths use the same scaleHW as the Sankey ribbons, converted to
+% legend-axes data-coordinates so the visual thickness matches exactly.
 maxP        = max(meanZ(:));
 legendProbs = maxP * [0.25 0.5 0.75 1.0];
-dispHWs     = [0.022 0.044 0.066 0.088];   % proportional display half-widths
 nLeg        = numel(legendProbs);
 
-ax_l = axes('Parent', fig, 'Position', [0.80 0.03 0.17 0.24]);
+leg_pos = [0.80 0.03 0.17 0.24];
+ax_l = axes('Parent', fig, 'Position', leg_pos);
 hold(ax_l, 'on');
 axis(ax_l, 'off');
 ax_l.XLim = [0 1];
 ax_l.YLim = [0 1];
 
+% Scale factor: fig-norm units per data unit in each axes.
+% Multiplying a Sankey data-coord half-width by hw_scale gives the
+% equivalent half-width in legend data-coords with identical screen size.
+sankey_ppu = ax.Position(4) / diff(ax.YLim);    % Sankey axes
+leg_ppu    = leg_pos(4)     / diff(ax_l.YLim);  % legend axes
+hw_scale   = sankey_ppu / leg_ppu;
+
 lx0  = 0.05;  lx1 = 0.60;
 lgap = 0.70 / nLeg;
 
 for k = 1:nLeg
-    ly = 0.12 + (k - 0.5) * lgap;
+    ly  = 0.12 + (k - 0.5) * lgap;
+    lhw = legendProbs(k) * scaleHW * hw_scale;
     fill([linspace(lx0, lx1, 40), linspace(lx1, lx0, 40)], ...
-         [repmat(ly + dispHWs(k), 1, 40), repmat(ly - dispHWs(k), 1, 40)], ...
+         [repmat(ly + lhw, 1, 40), repmat(ly - lhw, 1, 40)], ...
          [0 0 0], 'EdgeColor', 'none', 'FaceAlpha', 0.6, 'Parent', ax_l);
     text(lx1 + 0.06, ly, sprintf('%.2f', legendProbs(k)), ...
         'FontSize', 7, 'VerticalAlignment', 'middle', 'Parent', ax_l);
