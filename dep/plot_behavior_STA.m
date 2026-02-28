@@ -89,7 +89,7 @@ for b = 1:numBehaviors
     subplot(numSubplots, 1, b); hold on;
 
     % Shade stimulus window
-    area([30 30+30], [numTrials*length(LEDStims)+5, numTrials*length(LEDStims)+5], ...
+    area([0 30], [numTrials*length(LEDStims)+5, numTrials*length(LEDStims)+5], ...
         'FaceColor', [0 0 0], 'FaceAlpha', 0.1, 'LineStyle', 'none');
 
     for k = 1:numTrials
@@ -101,7 +101,7 @@ for b = 1:numBehaviors
             event_times = find(behav_temp == 1);
 
             if ~isempty(event_times)
-                plot(event_times ./ FPS, p * ones(length(event_times), 1), ...
+                plot(event_times ./ FPS - 30, p * ones(length(event_times), 1), ...
                     '|', 'MarkerFaceColor', color, 'MarkerEdgeColor', color, ...
                     'MarkerSize', 1);
             end
@@ -112,7 +112,7 @@ for b = 1:numBehaviors
 
     ylabel(strrep(behavior_list{b}, '_', ' '), 'FontSize', 12);
     ylim([0, p]);
-    xlim([0, windowDur]);
+    xlim([-30, windowDur - 30]);
     box off; %axis off;
 
     % Store event_times_all per behavior for PSTH subplot
@@ -126,17 +126,17 @@ title(labels{line_idx}, 'FontSize', 11, 'Interpreter', 'none');
 
 %% Subplot numBehaviors+1: Combined PSTH (one trace per behavior)
 subplot(numSubplots, 1, numBehaviors + 1); hold on;
-area([30, 60], [1, 1], 'FaceColor', [0 0 0], 'FaceAlpha', 0.1, 'LineStyle', 'none');
+area([0, 30], [1, 1], 'FaceColor', [0 0 0], 'FaceAlpha', 0.1, 'LineStyle', 'none');
 
 for b = 1:numBehaviors
     color = default_colors{mod(b-1, length(default_colors)) + 1};
     [d, edges] = psth(all_events{b}, 500, 60, total_rows(b), windowLength);
-    area(edges ./ 1000, d ./ 60, ...
+    area(edges ./ 1000 - 30, d ./ 60, ...
         'FaceColor',  color, 'EdgeColor', color, ...
         'FaceAlpha', 0.2, 'LineWidth', 1.5);
 end
 
-xlim([0, windowDur]);
+xlim([-30, windowDur - 30]);
 ylim([0, 1]);
 ylabel('P(Behavior)', 'FontSize', 12);
 box off;
@@ -156,18 +156,18 @@ for k = 1:numTrials
 end
 
 dist_color = default_colors{mod(numBehaviors, length(default_colors)) + 1};
-t_axis     = (1:size(dist_traces, 2)) ./ FPS;
+t_axis     = (1:size(dist_traces, 2)) ./ FPS - 30;
 
 subplot(numSubplots, 1, numSubplots); hold on;
-area([30, 60], [50, 50], 'FaceColor', [0 0 0], 'FaceAlpha', 0.1, 'LineStyle', 'none');
+area([0, 30], [50, 50], 'FaceColor', [0 0 0], 'FaceAlpha', 0.1, 'LineStyle', 'none');
 shplot(t_axis, mean(dist_traces, 1), ...
        std(dist_traces, 0, 1) ./ sqrt(size(dist_traces, 1)), ...
        'Color', dist_color);
-plot([0, windowDur], [6, 6], 'k--', 'LineWidth', 1);
+plot([-30, windowDur - 30], [6, 6], 'k--', 'LineWidth', 1);
 ylim([0, 20]);
-xlim([0, windowDur]);
+xlim([-30, windowDur - 30]);
 ylabel('Distance (mm)', 'FontSize', 12);
-xlabel('Time (s)', 'FontSize', 12);
+xlabel('Time from Stimulus Onset (s)', 'FontSize', 12);
 box off;
 
 %% Save (optional — only if both SavePath and SaveFormat are provided)

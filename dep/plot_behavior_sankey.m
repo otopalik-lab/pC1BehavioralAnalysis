@@ -288,14 +288,14 @@ end
 %% ═══════════════════════════════════════════════════════════════════════════
 function behavColors = get_behavior_colors(behaviors)
 
-known_behaviors = {'proximal','notmoving','pursuit','approach','fixation', ...
+known_behaviors = {'close','still','chase','approach','orient', ...
                    'unilateralwing','wingflick','aggression','boxing', ...
                    'headbutt','tussle'};
-known_colors    = [0.9961 0.3804 0.0000;   % proximal        #FE6100  orange
-                   0.2745 0.3922 1.0000;   % notmoving                 blue
-                   0.8627 0.1490 0.4980;   % pursuit                   magenta
+known_colors    = [0.9961 0.3804 0.0000;   % close           #FE6100  orange
+                   0.2745 0.3922 1.0000;   % still                     blue
+                   0.8627 0.1490 0.4980;   % chase                     magenta
                    0.0000 0.7490 0.6863;   % approach                  teal
-                   0.9843 0.7647 0.0000;   % fixation                  yellow
+                   0.9843 0.7647 0.0000;   % orient                    yellow
                    0.3922 0.5608 1.0000;   % unilateralwing  #648FFF  blue
                    0.5490 0.2745 0.0784;   % wingflick                 brown
                    0.8627 0.1490 0.4980;   % aggression      #DC267F  magenta
@@ -402,10 +402,25 @@ scaleHW = maxHW / max(meanZ(:));
 %% Layout coordinates
 xLeft  = 0;   xRight = 1;
 yLeft  = linspace(0, 1, nCT);
-yRight = linspace(0.15, 0.85, nB);
 
 totalLeft  = sum(meanZ * scaleHW, 2);   % total stacked ribbon height per CT
 totalRight = sum(meanZ * scaleHW, 1)';  % total stacked ribbon height per behavior
+
+% Start with evenly spaced right-node centres, then resolve vertical overlaps.
+% Bottom-up pass: push each node up until it clears the node below by minGap.
+% If the top node drifts above the plot area, shift the whole column back down.
+yRight = linspace(0.15, 0.85, nB);
+minGap = 0.02;
+for b = 2:nB
+    minCenter = yRight(b-1) + totalRight(b-1)/2 + minGap + totalRight(b)/2;
+    if yRight(b) < minCenter
+        yRight(b) = minCenter;
+    end
+end
+topEdge = yRight(nB) + totalRight(nB)/2;
+if topEdge > 0.95
+    yRight = yRight - (topEdge - 0.95);
+end
 
 %% ── Main Sankey figure ───────────────────────────────────────────────────────
 fig  = figure('Color', 'w', 'Position', [600 100 900 1000]);
@@ -451,7 +466,7 @@ for c = 1:nCT
     rectangle('Position', [xLeft - nodeW, yLeft(c) - hw, nodeW, totalLeft(c)], ...
         'FaceColor', [0.3 0.3 0.3], 'EdgeColor', 'none');
     text(xLeft - nodeW - 0.01, yLeft(c), cellTypes{c}, ...
-        'HorizontalAlignment', 'right', 'FontSize', 8, 'Color', 'k');
+        'HorizontalAlignment', 'right', 'FontSize', 14, 'Color', 'k');
 end
 
 % Right node bars (behaviors)
@@ -461,7 +476,7 @@ for b = 1:nB
     rectangle('Position', [xRight, yRight(b) - hw, nodeW, totalRight(b)], ...
         'FaceColor', behavColors(b, :), 'EdgeColor', 'none');
     text(xRight + nodeW + 0.01, yRight(b), strrep(behaviors{b}, '_', ' '), ...
-        'HorizontalAlignment', 'left', 'FontSize', 10, 'FontWeight', 'bold', ...
+        'HorizontalAlignment', 'left', 'FontSize', 14, 'FontWeight', 'bold', ...
         'Color', behavColors(b, :));
 end
 
@@ -501,7 +516,10 @@ for k = 1:nLeg
         'FontSize', 14, 'VerticalAlignment', 'middle', 'Parent', ax_l);
 end
 
-text(0.5, 0.93, 'p(behavior)', 'HorizontalAlignment', 'center', ...
+% Place title just above the top ribbon (k = nLeg, prob = 1.00)
+ly_top  = 0.12 + (nLeg - 0.5) * lgap;
+lhw_top = legendProbs(nLeg) * scaleHW * hw_scale / 2;
+text(0.5, ly_top + lhw_top + 0.05, 'p(behavior)', 'HorizontalAlignment', 'center', ...
     'FontSize', 14, 'FontWeight', 'bold', 'Parent', ax_l);
 
 end
