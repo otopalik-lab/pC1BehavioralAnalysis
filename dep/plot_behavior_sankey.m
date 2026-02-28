@@ -291,17 +291,17 @@ function behavColors = get_behavior_colors(behaviors)
 known_behaviors = {'proximal','notmoving','pursuit','approach','fixation', ...
                    'unilateralwing','wingflick','aggression','boxing', ...
                    'headbutt','tussle'};
-known_colors    = [0.9961 0.3804 0.0000;   % proximal       #FE6100
-                   0.2745 0.3922 1.0000;   % notmoving
-                   0.8627 0.1490 0.4980;   % pursuit
-                   0.0000 0.7490 0.6863;   % approach
-                   0.9843 0.7647 0.0000;   % fixation
-                   0.3922 0.5608 1.0000;   % unilateralwing  #648FFF
-                   0.4706 0.8235 0.0863;   % wingflick
-                   0.8627 0.1490 0.4980;   % aggression      #DC267F
-                   0.9412 0.1765 0.1765;   % boxing
-                   0.2000 0.7216 0.9608;   % headbutt
-                   0.9608 0.7020 0.2314];  % tussle
+known_colors    = [0.9961 0.3804 0.0000;   % proximal        #FE6100  orange
+                   0.2745 0.3922 1.0000;   % notmoving                 blue
+                   0.8627 0.1490 0.4980;   % pursuit                   magenta
+                   0.0000 0.7490 0.6863;   % approach                  teal
+                   0.9843 0.7647 0.0000;   % fixation                  yellow
+                   0.3922 0.5608 1.0000;   % unilateralwing  #648FFF  blue
+                   0.5490 0.2745 0.0784;   % wingflick                 brown
+                   0.8627 0.1490 0.4980;   % aggression      #DC267F  magenta
+                   0.4000 0.7020 0.0745;   % boxing                    dark lime green
+                   0.2000 0.7216 0.9608;   % headbutt                  sky blue
+                   0.9412 0.1765 0.1765];  % tussle                    red
 
 % Fallback palette for behaviors not in the list above
 fallback = [0.1216 0.4706 0.7059;
