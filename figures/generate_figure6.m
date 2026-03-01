@@ -27,15 +27,15 @@ plot_behavior_STA('SS59911',{'unilateralwing', 'aggression'});
 %% Figure 6C: Heatmaps of behavioral probabilities over time across all pC1 SS Lines for selected behavioral classes:
 
 binsize = 1000; %in milliseconds
-plot_PSTH_heatmap('all','close', binsize) %'proximal is equivalent to 'close' in the paper
-plot_PSTH_heatmap('all','unilateralwing', binsize)  
-plot_PSTH_heatmap('all','aggression',binsize)  
+plot_behavior_PSTH_heatmap('all','close', binsize) %'proximal is equivalent to 'close' in the paper
+plot_behavior_PSTH_heatmap('all','unilateralwing', binsize)  
+plot_behavior_PSTH_heatmap('all','aggression',binsize)  
 
 %% Figure 6D: 2-bin (30-sec each) Heatmaps of behavioral probabilities with p-value annotations all pC1 SS Lines for selected behavioral classes:
 
-plot_2bin_heatmap('all','close') %'proximal is equivalent to 'close' in the paper
-plot_2bin_heatmap('all','unilateralwing')
-plot_2bin_heatmap('all','aggression')
+plot_behavior_2bin_heatmap('all','close') %'proximal is equivalent to 'close' in the paper
+plot_behavior_2bin_heatmap('all','unilateralwing')
+plot_behavior_2bin_heatmap('all','aggression')
 
 %% Figure 6E: Sankey Diagrams for LED Stimulation and Post-Stimulation Periods:
 

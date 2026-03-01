@@ -1,4 +1,4 @@
-function plot_PSTH_heatmap(line_input, behavior, binsize, SavePath, SaveFormat)
+function plot_behavior_PSTH_heatmap(line_input, behavior, binsize, SavePath, SaveFormat)
 % PLOT_PSTH_HEATMAP  Plot a peri-stimulus PSTH heatmap of p(behavior) for
 %                    the specified SS lines aligned to the three
 %                    highest-power LED stimulus epochs.
