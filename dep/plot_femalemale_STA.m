@@ -1,9 +1,9 @@
 function fig = plot_femalemale_STA(line_input, behavior_list, SavePath, SaveFormat)
 %PLOT_FEMALEMALE_STA  Stimulus-triggered averages for female–male interaction data.
 %
-%   For each of the last N detected LED epochs (default 3), extracts a
-%   peri-stimulus window (default ±30 s around LED onset/offset) and
-%   pools across all trials for the specified driver line.
+%   For each LED epoch index in LEDStims (default [1 2 3]), extracts a
+%   peri-stimulus window (60 s pre + 120 s LED + 60 s post) anchored to
+%   LED onset, and pools across all trials for the specified driver line.
 %
 %   Binary behavior fields → tick-mark rasters (rows = trials × epochs)
 %   Continuous fields      → mean ± SEM shaded traces across windows
@@ -28,8 +28,10 @@ function fig = plot_femalemale_STA(line_input, behavior_list, SavePath, SaveForm
 %   SaveFormat     File format string, e.g. '.pdf', '.png', '.svg'
 %
 % ── PARAMETERS (edit defaults below) ─────────────────────────────────────
-%   pre_post_sec   Seconds of pre/post window around each LED epoch (30 s)
-%   n_stims        Number of highest-power (last) LED epochs to use (3)
+%   pre_post_sec   Seconds of pre/post window around each LED epoch (60 s)
+%   stim_dur_sec   LED epoch duration in seconds (120 s)
+%   LEDStims       Epoch indices (into per-trial detected epochs) to include,
+%                  e.g. [1 2 3] uses the 1st, 2nd, and 3rd detected epochs
 %
 % ── BASE WORKSPACE REQUIREMENTS ───────────────────────────────────────────
 %   FemaleMaleData    struct array with per-trial behavioral fields
@@ -39,8 +41,9 @@ function fig = plot_femalemale_STA(line_input, behavior_list, SavePath, SaveForm
 %   fig   figure handle
 
 %% ── Tunable defaults ─────────────────────────────────────────────────────
-pre_post_sec = 30;   % pre- and post-stimulus window (seconds)
-n_stims      = 3;    % number of highest-power (last) LED epochs to average
+pre_post_sec = 60;        % pre- and post-stimulus window (seconds)
+stim_dur_sec = 120;       % LED epoch duration (seconds) — hardcoded for this experiment
+LEDStims     = [2 3 4];   % indices of LED epochs (per trial) to average
 
 %% ── Load from base workspace ─────────────────────────────────────────────
 FemaleMaleData = evalin('base', 'FemaleMaleData');
@@ -60,6 +63,13 @@ else
     error('line_input must be a string driver name or a numeric index vector.');
 end
 
+max_trials = 18;
+if length(trial_inds) > max_trials
+    rng('shuffle');
+    n_total    = length(trial_inds);
+    trial_inds = trial_inds(randperm(n_total, max_trials));
+    fprintf('Randomly selected %d of %d available trials.\n', max_trials, n_total);
+end
 numTrials = length(trial_inds);
 FPS       = FemaleMaleData(trial_inds(1)).FPS;
 
@@ -84,36 +94,52 @@ for b = 1:length(behavior_list)
     end
 end
 
-%% ── Common behavior vector length ────────────────────────────────────────
-beh_len = inf;
+%% ── Window parameters ────────────────────────────────────────────────────
+pre_frames   = round(pre_post_sec * FPS);
+stim_frames  = round(stim_dur_sec * FPS);
+
+% Fixed window: pre_post_sec before LED onset, stim_dur_sec LED, pre_post_sec after
+windowLength = pre_frames + stim_frames + pre_frames;
+t_xlim       = [-pre_post_sec, stim_dur_sec + pre_post_sec];   % [-60, 180]
+xt           = [-pre_post_sec, 0, stim_dur_sec, stim_dur_sec + pre_post_sec];  % [-60 0 120 180]
+t_win        = (0:windowLength-1) ./ FPS - pre_post_sec;
+
+%% ── Pre-compute valid peri-stimulus windows (per trial) ─────────────────
+% Epochs are detected from the full LED vector so that later bouts are not
+% truncated by the (shorter) behavior vector. LEDStims selects which epoch
+% indices to include; each trial contributes one row per valid index
+% (expected total = numTrials × length(LEDStims)).
+valid_windows = zeros(0, 2);   % rows: [global_struct_index, onset_frame]
+
 for k = 1:numTrials
-    beh_len = min(beh_len, length(FemaleMaleData(trial_inds(k)).(behavior_list{1})));
+    % Use this trial's own behavior length as the validity boundary
+    trial_beh_len = double(length(FemaleMaleData(trial_inds(k)).(behavior_list{1})));
+
+    LED_raw_k = double(FemaleMaleData(trial_inds(k)).LED)';
+    % Detect epochs from the full LED vector (not truncated to beh_len).
+    % Window validity against trial_beh_len is checked below.
+    epochs_k = detect_binarybouts(LED_raw_k > 0);
+    n_ep_k   = size(epochs_k, 1);
+    if n_ep_k == 0; continue; end
+
+    % Use only the requested epoch indices that exist for this trial
+    stim_inds_k = LEDStims(LEDStims <= n_ep_k);
+    for j = stim_inds_k
+        onset     = epochs_k(j, 1);
+        win_start = onset - pre_frames + 1;
+        win_end   = onset + stim_frames + pre_frames;
+        if win_start >= 1 && win_end <= trial_beh_len
+            valid_windows(end+1, :) = [trial_inds(k), onset]; %#ok<AGROW>
+        end
+    end
 end
-beh_len = double(beh_len);
 
-%% ── LED epochs from first trial ─────────────────────────────────────────
-LED_raw  = double(FemaleMaleData(trial_inds(1)).LED);
-LED_vec  = LED_raw(1:min(beh_len, length(LED_raw)));
-if length(LED_vec) < beh_len
-    LED_vec(end+1:beh_len) = 0;
+n_valid = size(valid_windows, 1);
+if n_valid == 0
+    error('No valid peri-stimulus windows found. Check LED timing and beh_len.');
 end
-LED_epochs = detect_binarybouts(LED_vec > 0);
-
-n_ep = size(LED_epochs, 1);
-if n_ep == 0
-    error('No LED epochs detected in trial %d. Check the LED field.', trial_inds(1));
-end
-
-% Select last n_stims epochs (typically highest LED powers)
-stim_rows   = max(1, n_ep - n_stims + 1) : n_ep;
-pre_frames  = round(pre_post_sec * FPS);
-
-% Window size is determined by the first selected epoch
-ep_ref      = stim_rows(1);
-stim_dur    = (LED_epochs(ep_ref,2) - LED_epochs(ep_ref,1)) / FPS;  % LED-on duration (s)
-windowLength = pre_frames + (LED_epochs(ep_ref,2) - LED_epochs(ep_ref,1)) + 1 + pre_frames;
-t_xlim      = [-pre_post_sec, stim_dur + pre_post_sec];
-xt          = unique([-pre_post_sec, 0, round(stim_dur), round(stim_dur + pre_post_sec)]);
+fprintf('Found %d valid windows (%d trials × %d stims requested).\n', ...
+    n_valid, numTrials, length(LEDStims));
 
 %% ── Detect continuous vs binary behaviors ────────────────────────────────
 known_continuous = {'Distance','FacingAngle','AngleBetween','MaleVelocity','FemaleVelocity'};
@@ -158,62 +184,48 @@ for b = 1:numBehaviors
     subplot(numSubplots, 1, b); hold on;
 
     % Shade stimulus period (fill to large value; ylim will clip)
-    fill([0 stim_dur stim_dur 0], [-1e6 -1e6 1e6 1e6], [0 0 0], ...
+    fill([0 stim_dur_sec stim_dur_sec 0], [-1e6 -1e6 1e6 1e6], [0 0 0], ...
         'FaceAlpha', 0.1, 'EdgeColor', 'none');
 
     if ~is_continuous(b)
         %── Binary: tick-mark raster ─────────────────────────────────────
         event_times_all = [];
-        p = 1;
 
-        for k = 1:numTrials
-            for j = stim_rows
-                onset     = LED_epochs(j, 1);
-                offset    = LED_epochs(j, 2);
-                win_start = onset  - pre_frames;
-                win_end   = offset + pre_frames;
-                if win_start < 1 || win_end > beh_len; continue; end
+        for p = 1:n_valid
+            trial_ind = valid_windows(p, 1);
+            onset     = valid_windows(p, 2);
+            win_start = onset - pre_frames + 1;
+            win_end   = onset + stim_frames + pre_frames;
 
-                d   = double(FemaleMaleData(trial_inds(k)).(behavior_list{b}));
-                seg = d(win_start : win_end);
-                ev  = find(seg == 1);
+            d   = double(FemaleMaleData(trial_ind).(behavior_list{b}));
+            seg = d(win_start : win_end);
+            ev  = find(seg == 1);
 
-                if ~isempty(ev)
-                    plot(ev ./ FPS - pre_post_sec, p * ones(size(ev)), ...
-                        '|', 'MarkerFaceColor', color, 'MarkerEdgeColor', color, ...
-                        'MarkerSize', 1);
-                end
-                event_times_all = [event_times_all, ev]; %#ok<AGROW>
-                p = p + 1;
+            if ~isempty(ev)
+                plot(ev ./ FPS - pre_post_sec, p * ones(size(ev)), ...
+                    '|', 'MarkerFaceColor', color, 'MarkerEdgeColor', color, ...
+                    'MarkerSize', 1);
             end
+            event_times_all = [event_times_all, ev]; %#ok<AGROW>
         end
 
         all_events{b} = event_times_all;
-        total_rows(b) = max(p - 1, 1);
-        ylim([0, p]);
+        total_rows(b) = n_valid;
+        ylim([0, n_valid + 1]);
 
     else
         %── Continuous: mean ± SEM trace ────────────────────────────────
-        traces = [];
-        for k = 1:numTrials
-            for j = stim_rows
-                onset     = LED_epochs(j, 1);
-                offset    = LED_epochs(j, 2);
-                win_start = onset  - pre_frames;
-                win_end   = offset + pre_frames;
-                if win_start < 1 || win_end > beh_len; continue; end
+        traces = zeros(n_valid, windowLength);
+        for p = 1:n_valid
+            trial_ind = valid_windows(p, 1);
+            onset     = valid_windows(p, 2);
+            win_start = onset - pre_frames + 1;
+            win_end   = onset + stim_frames + pre_frames;
 
-                d   = double(FemaleMaleData(trial_inds(k)).(behavior_list{b}));
-                seg = d(win_start : win_end);
-                if length(seg) == windowLength
-                    traces = [traces; seg(:)']; %#ok<AGROW>
-                end
-            end
+            d = double(FemaleMaleData(trial_ind).(behavior_list{b}));
+            traces(p, :) = d(win_start : win_end);
         end
-        t_win = (0:windowLength-1) ./ FPS - pre_post_sec;
-        if ~isempty(traces)
-            shplot(t_win, mean(traces,1), std(traces,0,1)./sqrt(size(traces,1)), 'Color', color);
-        end
+        shplot(t_win, mean(traces,1), std(traces,0,1)./sqrt(n_valid), 'Color', color);
     end
 
     ylabel(beh_ylabel{b}, 'FontSize', 12);
@@ -230,7 +242,7 @@ title(title_str, 'FontSize', 11, 'Interpreter', 'none');
 if has_psth
     subplot(numSubplots, 1, numBehaviors + 1); hold on;
 
-    fill([0 stim_dur stim_dur 0], [-1e6 -1e6 1e6 1e6], [0 0 0], ...
+    fill([0 stim_dur_sec stim_dur_sec 0], [-1e6 -1e6 1e6 1e6], [0 0 0], ...
         'FaceAlpha', 0.1, 'EdgeColor', 'none');
 
     for b = 1:numBehaviors
@@ -255,37 +267,27 @@ end
 
 %% ── Distance panel (mean ± SEM, always last) ─────────────────────────────
 dist_color  = default_colors{mod(numBehaviors, length(default_colors)) + 1};
-dist_traces = [];
+dist_traces = zeros(n_valid, windowLength);
 
-for k = 1:numTrials
-    for j = stim_rows
-        onset     = LED_epochs(j, 1);
-        offset    = LED_epochs(j, 2);
-        win_start = onset  - pre_frames;
-        win_end   = offset + pre_frames;
-        if win_start < 1 || win_end > beh_len; continue; end
+for p = 1:n_valid
+    trial_ind = valid_windows(p, 1);
+    onset     = valid_windows(p, 2);
+    win_start = onset - pre_frames + 1;
+    win_end   = onset + stim_frames + pre_frames;
 
-        d   = double(FemaleMaleData(trial_inds(k)).Distance);
-        seg = d(win_start : win_end);
-        if length(seg) == windowLength
-            dist_traces = [dist_traces; seg(:)']; %#ok<AGROW>
-        end
-    end
+    d = double(FemaleMaleData(trial_ind).Distance);
+    dist_traces(p, :) = d(win_start : win_end);
 end
-
-t_win = (0:windowLength-1) ./ FPS - pre_post_sec;
 
 subplot(numSubplots, 1, numSubplots); hold on;
 
-fill([0 stim_dur stim_dur 0], [-1e6 -1e6 1e6 1e6], [0 0 0], ...
+fill([0 stim_dur_sec stim_dur_sec 0], [-1e6 -1e6 1e6 1e6], [0 0 0], ...
     'FaceAlpha', 0.1, 'EdgeColor', 'none');
 
-if ~isempty(dist_traces)
-    shplot(t_win, mean(dist_traces,1), std(dist_traces,0,1)./sqrt(size(dist_traces,1)), ...
-        'Color', dist_color);
-end
+shplot(t_win, mean(dist_traces,1), std(dist_traces,0,1)./sqrt(n_valid), ...
+    'Color', dist_color);
 
-ylim([0, 20]);
+ylim([0, 15]);
 xlim(t_xlim);
 xticks(xt);
 ylabel('Distance (mm)', 'FontSize', 12);
