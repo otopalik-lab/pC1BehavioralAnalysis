@@ -36,10 +36,10 @@ function [fig_heatmap, fig_stats] = plot_pC1_song_heatmap( ...
 %   'SaveFormat'  char     '.pdf', '.png', etc.
 %
 % ── BASE WORKSPACE REQUIREMENTS ───────────────────────────────────────────
-%   data_activation      isolated-male activation struct (1×35)
-%   data_MFP_activation  courting-male  activation struct (1×35)
-%   lines                1×35 cell array of SS line name strings
-%   celltypes            1×35 cell array of cell-type name strings
+%   data_isolatedmale_activation        isolated-male activation struct (1×35)
+%   data_courtingmale_activation        courting-male  activation struct (1×35)
+%   lines                               1×35 cell array of SS line name strings
+%   celltypes                           1×35 cell array of cell-type name strings
 %
 % ── STATS ─────────────────────────────────────────────────────────────────
 %   Isolated : one-way ANOVA + Dunnett's test (each LED intensity vs. PRE

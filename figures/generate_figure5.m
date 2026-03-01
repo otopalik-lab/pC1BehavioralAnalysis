@@ -13,4 +13,7 @@ load('SongRecordingData_BaseWorkspace.mat')
 SaveFormat = '.png'; %can change this as desired (see 'save' function in MATLAB for available formats'
 SavePath = '/Users/otopalika/Documents/GitHub/pC1BehavioralAnalysis/results/figure5'; % can change as desired
 
-%% Fig 5A: 
+%% Fig 5B: LED Stimulus-Aligned Sine and Pulse event raster plots, and PSTHs for selected pC1 SS line:
+
+
+
