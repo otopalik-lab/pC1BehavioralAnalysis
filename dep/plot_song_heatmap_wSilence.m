@@ -1,21 +1,22 @@
-function [fig_heatmap, fig_stats] = plot_pC1_song_heatmap( ...
+function fig_heatmap = plot_song_heatmap_wSilence( ...
     line_input, dataset_type, stim_period, varargin)
-%PLOT_PC1_SONG_HEATMAP  Heatmap of evoked song across pC1 activation lines.
+%PLOT_SONG_HEATMAP_WSILENCE  Heatmap of evoked song across pC1 activation lines.
 %
 %   Plots pulse and sine song as heatmaps (rows = SS lines, cols = LED power)
-%   with an accompanying significance heatmap, for either isolated or courting
-%   male activation experiments.
+%   with an accompanying significance heatmap, for isolated or courting male
+%   activation/silencing experiments.
 %
-%   For ISOLATED males : pulse/min and sine %time (raw values scaled to a
-%                        5-s window and to % time, respectively).
-%   For COURTING males : z-scores relative to the empty-split control (line 1),
-%                        computed per trial as (ΔLED − ctrl_mean) / ctrl_std.
+%   For ISOLATED males    : pulse/min and sine %time (raw values scaled to a
+%                           5-s window and to % time, respectively).
+%   For COURTING males    : z-scores relative to the empty-split control (line 1),
+%                           computed per trial as (ΔLED − ctrl_mean) / ctrl_std.
+%                           Applies to both activation and silencing datasets.
 %
 % ── USAGE ─────────────────────────────────────────────────────────────────
-%   [fh, fs] = plot_pC1_song_heatmap('all', 'isolated', 'LED')
-%   [fh, fs] = plot_pC1_song_heatmap([1 3 5], 'courting', 'transient')
-%   [fh, fs] = plot_pC1_song_heatmap('all', 'isolated', 'post', ...
-%                                    'clim_pulse', [0 80], 'alpha', 0.01)
+%   fh = plot_song_heatmap_wSilence('all', 'isolated_activation', 'LED')
+%   fh = plot_song_heatmap_wSilence([1 3 5], 'courting_activation', 'transient')
+%   fh = plot_song_heatmap_wSilence('all', 'isolated_activation', 'post', ...
+%                                   'clim_pulse', [0 80], 'alpha', 0.01)
 %
 % ── REQUIRED INPUTS ───────────────────────────────────────────────────────
 %   line_input    'all' | char | cell | numeric   Lines to include
@@ -23,42 +24,40 @@ function [fig_heatmap, fig_stats] = plot_pC1_song_heatmap( ...
 %                   'SS102671'         → single line by name
 %                   {'SS102671', …}    → subset by name
 %                   [1 3 5 …]          → subset by 1-based index
-%   dataset_type  'isolated' | 'courting'
+%   dataset_type  'isolated_activation' | 'courting_activation' | 'courting_silencing'
 %   stim_period   'LED' | 'transient' | 'post'
 %
 % ── OPTIONAL NAME-VALUE INPUTS ────────────────────────────────────────────
 %   'clim_pulse'  [lo hi]  Pulse color limits (default [0 100] / [-6 6])
 %   'clim_sine'   [lo hi]  Sine color limits  (default [] auto / [-6 6])
 %   'alpha'       scalar   Significance threshold (default 0.05)
-%   'sig_lo'      int      Min sig. intensities → light gray (default 1)
-%   'sig_hi'      int      Min sig. intensities → black      (default 3)
-%   'SavePath'    char     Directory to save figures (requires SaveFormat)
+%   'SavePath'    char     Directory to save figure (requires SaveFormat)
 %   'SaveFormat'  char     '.pdf', '.png', etc.
 %
 % ── BASE WORKSPACE REQUIREMENTS ───────────────────────────────────────────
-%   data_activation      isolated-male activation struct (1×35)
-%   data_MFP_activation  courting-male  activation struct (1×35)
-%   lines                1×35 cell array of SS line name strings
-%   celltypes            1×35 cell array of cell-type name strings
+%   data_isolatedmale_activation   isolated-male activation struct
+%   data_courtingmale_activation   courting-male activation struct
+%   data_courtingmale_silencing    courting-male silencing struct
+%   lines       1×N cell array of SS line name strings
+%   celltypes   1×N cell array of cell-type name strings
 %
 % ── STATS ─────────────────────────────────────────────────────────────────
-%   Isolated : one-way ANOVA + Dunnett's test (each LED intensity vs. PRE
-%              baseline, Dunnett's control group = 1).
-%   Courting : one-sample t-test on per-trial z-scores against 0.
-%   Light-gray cell = ≥ sig_lo significant intensities.
-%   Black cell      = ≥ sig_hi significant intensities.
+%   Isolated : one-way ANOVA + Dunnett's test per line (each LED intensity
+%              vs. PRE baseline, control group = 1).
+%   Courting : one-way ANOVA + Dunnett's test per LED intensity across all
+%              selected lines, with the empty split as the control group.
+%   Significant (line, LED-power) cells are annotated with a magenta dot
+%   directly on each heatmap panel (matching plot_2bin_heatmap convention).
 %
 % ── OUTPUTS ───────────────────────────────────────────────────────────────
-%   fig_heatmap   Figure handle – pulse and sine heatmaps side-by-side
-%   fig_stats     Figure handle – significance heatmaps (pulse | sine)
+%   fig_heatmap   Figure handle – pulse and sine heatmaps with significance
+%                 annotations overlaid as magenta dots
 
 %% ── Parse optional arguments ─────────────────────────────────────────────
 ip = inputParser;
 ip.addParameter('clim_pulse',  [],   @(x) isnumeric(x) && numel(x)==2);
 ip.addParameter('clim_sine',   [],   @(x) isnumeric(x) && numel(x)==2);
 ip.addParameter('alpha',       0.05, @(x) isnumeric(x) && isscalar(x));
-ip.addParameter('sig_lo',      1,    @(x) isnumeric(x) && isscalar(x));
-ip.addParameter('sig_hi',      3,    @(x) isnumeric(x) && isscalar(x));
 ip.addParameter('SavePath',    '',   @ischar);
 ip.addParameter('SaveFormat',  '',   @ischar);
 ip.parse(varargin{:});
@@ -67,8 +66,8 @@ opts = ip.Results;
 %% ── Validate required inputs ─────────────────────────────────────────────
 dataset_type = lower(dataset_type);
 stim_period  = lower(stim_period);
-assert(ismember(dataset_type, {'isolated','courting'}), ...
-    'dataset_type must be ''isolated'' or ''courting''.');
+assert(ismember(dataset_type, {'isolated_activation','courting_activation','courting_silencing'}), ...
+    'dataset_type must be ''isolated_activation'', ''courting_activation'', or ''courting_silencing''.');
 assert(ismember(stim_period, {'led','transient','post'}), ...
     'stim_period must be ''LED'', ''transient'', or ''post''.');
 
@@ -76,8 +75,9 @@ assert(ismember(stim_period, {'led','transient','post'}), ...
 lines     = evalin('base', 'lines');
 celltypes = evalin('base', 'celltypes');
 switch dataset_type
-    case 'isolated';  data = evalin('base', 'data_isolatedmale_activation');
-    case 'courting';  data = evalin('base', 'data_courtingmale_activation');
+    case 'isolated_activation';  data = evalin('base', 'data_isolatedmale_activation');
+    case 'courting_activation';  data = evalin('base', 'data_courtingmale_activation');
+    case 'courting_silencing';   data = evalin('base', 'data_courtingmale_silencing');
 end
 n_total = length(lines);
 
@@ -114,7 +114,7 @@ else
     error('line_input must be ''all'', a string, a cell array, or a numeric index vector.');
 end
 n_lines    = length(line_idx);
-row_labels = all_labels(line_idx);
+row_labels = strrep(all_labels(line_idx), '\', '');
 
 %% ── Colormaps ────────────────────────────────────────────────────────────
 n_colors       = 256;
@@ -126,34 +126,39 @@ bidirectional  = [blue_to_white; white_to_red];
 
 %% ── Extract heatmap data ─────────────────────────────────────────────────
 switch dataset_type
-    case 'isolated'
+    case 'isolated_activation'
         [pulse_plot, sine_plot, x_labels] = ...
             extract_isolated(data, line_idx, stim_period);
         cmap          = unidirectional;
         clim_p_def    = [0 100];
         clim_s_def    = [];           % auto-scale
-        label_pulse   = 'Pulse/min (per 5-s window)';
-        label_sine    = 'Sine % time';
+        label_pulse   = 'Number of Evoked Pulses';
+        label_sine    = '% Time Sine Song Evoked';
 
-    case 'courting'
+    case {'courting_activation', 'courting_silencing'}
         [pulse_plot, sine_plot, x_labels] = ...
             extract_courting(data, line_idx, stim_period);
         cmap          = bidirectional;
         clim_p_def    = [-6  6];
         clim_s_def    = [-6  6];
-        label_pulse   = 'Pulse z-score';
-        label_sine    = 'Sine z-score';
+        label_pulse   = 'Pulse Z-Score';
+        label_sine    = 'Sine Z-Score';
 end
 
 clim_p = opts.clim_pulse; if isempty(clim_p), clim_p = clim_p_def; end
 clim_s = opts.clim_sine;  if isempty(clim_s), clim_s = clim_s_def; end
 
 %% ── Song heatmap figure ──────────────────────────────────────────────────
-fig_h = max(400, 200 + n_lines * 14);
+switch dataset_type
+    case 'isolated_activation';  disp_name = 'Isolated (activation)';
+    case 'courting_activation';  disp_name = 'Courting (activation)';
+    case 'courting_silencing';   disp_name = 'Courting (silencing)';
+end
+
+fig_h = max(400, 200 + n_lines * 14) + 100;   % +100 px for colorbars below
 fig_heatmap = figure('Position', [200 200 520 fig_h]);
-tlo = tiledlayout(1, 2, 'TileSpacing', 'loose');
-title(tlo, sprintf('%s  |  %s', ...
-    [upper(dataset_type(1)) dataset_type(2:end)], upper(stim_period)), ...
+tlo = tiledlayout(1, 2, 'TileSpacing', 'compact');
+title(tlo, sprintf('%s  |  %s', disp_name, upper(stim_period)), ...
     'FontWeight', 'bold');
 
 % Pulse
@@ -181,49 +186,104 @@ if ~isempty(clim_s), hs.ColorLimits = clim_s; end
 hs.ColorbarVisible = 'off';
 hs.Title           = label_sine;
 
-%% ── Statistics ───────────────────────────────────────────────────────────
-stats_byline = compute_stats(data, line_idx, stim_period, dataset_type, opts.alpha);
+%% ── Statistics + heatmap annotation ─────────────────────────────────────
+% Empty split is the reference for all comparisons — identify it first so
+% it can be passed as the Dunnett control group and skipped in annotation.
+es_row = find(contains(row_labels, 'Empty'));
 
-% Build binary significance matrix (0 = ns, 30 = ≥ sig_lo, 100 = ≥ sig_hi)
-stats_mat = zeros(n_lines, 2);   % cols: [pulse, sine]
+stats_byline = compute_stats(data, line_idx, stim_period, dataset_type, opts.alpha, es_row);
+
+% For isolated_activation the heatmap includes a PRE column at position 1,
+% so stat index j → heatmap column j+1.  For courting datasets the lowest
+% LED intensity is already dropped before plotting, so stat index j maps
+% directly to heatmap column j.
+if strcmp(dataset_type, 'isolated_activation')
+    col_offset = 1;
+else
+    col_offset = 0;
+end
+
+annot_color = [0 0 0];   % black
+ax_p = struct(hp).Axes;
+ax_s = struct(hs).Axes;
+hold(ax_p, 'on');
+hold(ax_s, 'on');
+
 for k = 1:n_lines
-    n_sig_p = numel(stats_byline(k).pulse);
-    n_sig_s = numel(stats_byline(k).sine);
-    if n_sig_p >= opts.sig_lo, stats_mat(k,1) = 30;  end
-    if n_sig_p >= opts.sig_hi, stats_mat(k,1) = 100; end
-    if n_sig_s >= opts.sig_lo, stats_mat(k,2) = 30;  end
-    if n_sig_s >= opts.sig_hi, stats_mat(k,2) = 100; end
-end
-
-%% ── Stats figure ─────────────────────────────────────────────────────────
-fig_stats = figure('Position', [750 200 240 fig_h]);
-tls = tiledlayout(1, 2, 'TileSpacing', 'loose');
-title(tls, sprintf('Stats  |  %s', upper(stim_period)), 'FontWeight', 'bold');
-
-stat_xlabels = { ['Pulse-' upper(stim_period)], ['Sine-' upper(stim_period)] };
-for col = 1:2
-    nexttile;
-    ss = heatmap(stats_mat(:,col), 'CellLabelColor', 'none');
-    ss.GridVisible     = 'off';
-    ss.Colormap        = flipud(gray);
-    ss.ColorLimits     = [0 100];
-    ss.ColorbarVisible = 'off';
-    if col == 1
-        ss.YDisplayLabels = row_labels;
-        ss.YLabel         = 'SS Line';
-    else
-        ss.YDisplayLabels = repmat({' '}, n_lines, 1);
+    if any(k == es_row), continue; end
+    sig_p_cols = stats_byline(k).pulse + col_offset;
+    sig_s_cols = stats_byline(k).sine  + col_offset;
+    if ~isempty(sig_p_cols)
+        scatter(ax_p, sig_p_cols, k * ones(size(sig_p_cols)), 15, 'filled', ...
+                'MarkerFaceColor', annot_color);
     end
-    ss.XDisplayLabels = stat_xlabels(col);
-    ss.Title          = stat_xlabels{col};
+    if ~isempty(sig_s_cols)
+        scatter(ax_s, sig_s_cols, k * ones(size(sig_s_cols)), 15, 'filled', ...
+                'MarkerFaceColor', annot_color);
+    end
 end
+
+%% ── Post-render: y-labels and horizontal colorbars ───────────────────────
+drawnow;   % finalise tiledlayout so axis positions and color limits are set
+
+% Force y-tick labels always visible on the pulse panel by setting them
+% directly on the underlying axes (bypasses HeatmapChart's space-based hiding)
+ax_p.YTick                = 1:n_lines;
+ax_p.YTickLabel           = row_labels;
+ax_p.TickLabelInterpreter = 'none';
+
+% Remove Y-axis from the sine panel entirely so no dead space is left
+% between the two tiles.
+ax_s.YTick              = [];
+ax_s.YTickLabel         = {};
+ax_s.YAxis.Visible      = 'off';
+
+% Force x-tick labels always visible on both panels (same HeatmapChart
+% space-based hiding issue as for Y labels).
+n_cols = length(x_labels);
+ax_p.XTick                = 1:n_cols;
+ax_p.XTickLabel           = x_labels;
+ax_p.XTickLabelRotation   = 0;
+ax_p.TickLabelInterpreter = 'none';
+
+ax_s.XTick                = 1:n_cols;
+ax_s.XTickLabel           = x_labels;
+ax_s.XTickLabelRotation   = 0;
+ax_s.TickLabelInterpreter = 'none';
+
+% Horizontal colorbars drawn as imagesc axes below each heatmap panel,
+% matching the style of plot_2bin_heatmap.m.
+n_g          = 256;
+clim_p_final = hp.ColorLimits;
+clim_s_final = hs.ColorLimits;
+pos_p        = ax_p.Position;   % [left bottom width height] normalised
+pos_s        = ax_s.Position;
+cb_gap       = 0.05;
+cb_h         = 0.02;
+
+cb_ax_p = axes(fig_heatmap, 'Position', ...
+    [pos_p(1), pos_p(2) - cb_gap - cb_h, pos_p(3), cb_h]);
+imagesc(cb_ax_p, linspace(clim_p_final(1), clim_p_final(2), n_g), 1, 1:n_g);
+colormap(cb_ax_p, cmap);
+cb_ax_p.YTick   = [];
+cb_ax_p.XLim    = clim_p_final;
+cb_ax_p.TickDir = 'in';
+xlabel(cb_ax_p, label_pulse);
+
+cb_ax_s = axes(fig_heatmap, 'Position', ...
+    [pos_s(1), pos_s(2) - cb_gap - cb_h, pos_s(3), cb_h]);
+imagesc(cb_ax_s, linspace(clim_s_final(1), clim_s_final(2), n_g), 1, 1:n_g);
+colormap(cb_ax_s, cmap);
+cb_ax_s.YTick   = [];
+cb_ax_s.XLim    = clim_s_final;
+cb_ax_s.TickDir = 'in';
+xlabel(cb_ax_s, label_sine);
 
 %% ── Save (optional) ──────────────────────────────────────────────────────
 if ~isempty(opts.SavePath) && ~isempty(opts.SaveFormat)
     if ~exist(opts.SavePath, 'dir'), mkdir(opts.SavePath); end
     tag = [dataset_type '_' stim_period];
     saveas(fig_heatmap, fullfile(opts.SavePath, ['song_heatmap_' tag opts.SaveFormat]));
-    saveas(fig_stats,   fullfile(opts.SavePath, ['song_stats_'   tag opts.SaveFormat]));
 end
 
 end % main function
@@ -268,7 +328,7 @@ for k = 1:n_lines
 end
 
 led_powers = data(line_idx(1)).LEDPowers;
-x_labels   = [{'0'}, arrayfun(@num2str, led_powers, 'UniformOutput', false)];
+x_labels   = [{'0.0'}, arrayfun(@(x) num2str(x, '%.1f'), led_powers, 'UniformOutput', false)];
 end
 
 
@@ -327,7 +387,7 @@ for k = 1:n_lines
 end
 
 led_powers = data(line_idx(1)).LEDPowers;
-x_labels   = arrayfun(@num2str, led_powers(2:end), 'UniformOutput', false);
+x_labels   = arrayfun(@(x) num2str(x, '%.1f'), led_powers(2:end), 'UniformOutput', false);
 end
 
 
@@ -371,21 +431,22 @@ function delta = song_delta_trial(d, period, song_type, j)
 end
 
 
-function stats_byline = compute_stats(data, line_idx, period, dataset_type, alpha)
+function stats_byline = compute_stats(data, line_idx, period, dataset_type, alpha, es_idx)
 %COMPUTE_STATS  Test which LED intensities evoke significantly more song than
 %               baseline.
 %
-%   Isolated : one-way ANOVA + Dunnett's test (each LED intensity vs. PRE,
-%              group 1 = PRE). Returns indices of significant intensities.
-%   Courting : one-sample t-test on per-trial z-scores vs 0 for each LED
-%              intensity (skipping the lowest, matching extract_courting).
+%   Isolated : one-way ANOVA + Dunnett's test per line (each LED intensity
+%              vs. PRE, control group = 1).
+%   Courting : one-way ANOVA + Dunnett's test per LED intensity across all
+%              selected lines, with the empty split (es_idx) as the control
+%              group. Lowest LED intensity skipped to match heatmap columns.
 
 n_lines      = length(line_idx);
 stats_byline = repmat(struct('pulse', [], 'sine', []), n_lines, 1);
 
 switch dataset_type
 
-    case 'isolated'
+    case 'isolated_activation'
         for k = 1:n_lines
             i     = line_idx(k);
             pre_p = data(i).pulsePerMin.PRE(:, 1);   % n_trials × 1
@@ -419,70 +480,49 @@ switch dataset_type
             stats_byline(k).sine = find(res(:,6) < alpha);
         end
 
-    case 'courting'
-        % Re-derive z-scores (same copulation filter as extract_courting)
-        fs           = data(1).fs;
-        LED_ON_bouts = detect_binarybouts(data(1).LED);
-        LED_OFF_bouts = [LED_ON_bouts(:,1) - 5*fs - 2500, LED_ON_bouts(:,1) - 2500];
+    case {'courting_activation', 'courting_silencing'}
+        % One-way ANOVA per LED intensity across all selected lines, with
+        % Dunnett's test comparing each line vs the empty split (es_idx).
+        % Lowest LED intensity column is skipped to match the heatmap.
+        n_int  = size(song_delta(data(line_idx(1)), period, 'pulse'), 2);
+        n_disp = n_int - 1;
 
-        ctrl_dp  = song_delta(data(1), period, 'pulse');
-        ctrl_ds  = song_delta(data(1), period, 'sine');
-        ctrl_p_mn = mean(ctrl_dp, 1);  ctrl_p_std = std(ctrl_dp, 0, 1);
-        ctrl_s_mn = mean(ctrl_ds, 1);  ctrl_s_std = std(ctrl_ds, 0, 1);
-        n_int = size(ctrl_dp, 2);
+        for col = 1:n_disp
+            p_vals = [];   s_vals = [];
+            p_grps = [];   s_grps = [];
 
-        for k = 1:n_lines
-            i    = line_idx(k);
-            zp   = nan(20, n_int);
-            zs   = nan(20, n_int);
+            for k = 1:n_lines
+                i  = line_idx(k);
+                dp = song_delta(data(i), period, 'pulse');   % n_trials × n_int
+                ds = song_delta(data(i), period, 'sine');
+                p_vals = [p_vals; dp(:, col+1)];              %#ok<AGROW>
+                s_vals = [s_vals; ds(:, col+1)];              %#ok<AGROW>
+                p_grps = [p_grps; k * ones(size(dp,1), 1)];  %#ok<AGROW>
+                s_grps = [s_grps; k * ones(size(ds,1), 1)];  %#ok<AGROW>
+            end
 
-            for j = 1:20
-                pulse_events = data(i).pulse_idx(data(i).pulse_trial_idx == j);
-                pulse_cnt = sum(arrayfun( ...
-                    @(r) sum(pulse_events > LED_OFF_bouts(r,1) & pulse_events < LED_OFF_bouts(r,2)), ...
-                    1:size(LED_OFF_bouts,1)));
-
-                if mean(data(i).sinePerMin.PRE(j,:)) > 1 && pulse_cnt > 600
-                    dp = song_delta_trial(data(i), period, 'pulse', j);
-                    ds = song_delta_trial(data(i), period, 'sine',  j);
-                    zp(j,:) = (dp - ctrl_p_mn) ./ ctrl_p_std;
-                    zs(j,:) = (ds - ctrl_s_mn) ./ ctrl_s_std;
+            [~,~,st] = anova1(p_vals, p_grps, 'off');
+            res = multcompare(st, 'CriticalValueType', 'dunnett', ...
+                'Approximate', true, 'ControlGroup', es_idx, ...
+                'Alpha', alpha, 'Display', 'off');
+            for r = 1:size(res, 1)
+                if res(r,6) < alpha
+                    k = res(r, 1:2);  k = k(k ~= es_idx);
+                    if ~isempty(k), stats_byline(k).pulse(end+1) = col; end %#ok<AGROW>
                 end
             end
 
-            % One-sample t-test vs 0 for each displayed intensity (skip lowest column).
-            % Implemented inline to avoid conflicts between MATLAB's ttest
-            % (which calls nanstd(x,[],dim)) and nansuite's nanstd on the path.
-            n_disp = n_int - 1;
-            sig_p  = [];
-            sig_s  = [];
-            for col = 1:n_disp
-                zp_col = zp(~isnan(zp(:, col+1)), col+1);
-                zs_col = zs(~isnan(zs(:, col+1)), col+1);
-                if numel(zp_col) > 2
-                    pv = onesample_ttest(zp_col);
-                    if pv < alpha, sig_p(end+1) = col; end %#ok<AGROW>
-                end
-                if numel(zs_col) > 2
-                    pv = onesample_ttest(zs_col);
-                    if pv < alpha, sig_s(end+1) = col; end %#ok<AGROW>
+            [~,~,st] = anova1(s_vals, s_grps, 'off');
+            res = multcompare(st, 'CriticalValueType', 'dunnett', ...
+                'Approximate', true, 'ControlGroup', es_idx, ...
+                'Alpha', alpha, 'Display', 'off');
+            for r = 1:size(res, 1)
+                if res(r,6) < alpha
+                    k = res(r, 1:2);  k = k(k ~= es_idx);
+                    if ~isempty(k), stats_byline(k).sine(end+1) = col; end  %#ok<AGROW>
                 end
             end
-            stats_byline(k).pulse = sig_p;
-            stats_byline(k).sine  = sig_s;
         end
 
 end % switch dataset_type
 end % compute_stats
-
-
-function pv = onesample_ttest(x)
-%ONESAMPLE_TTEST  Two-tailed one-sample t-test of x against 0.
-%   Avoids calling MATLAB's ttest(), which internally uses nanstd(x,[],dim)
-%   and conflicts with nansuite's nanstd on the MATLAB path.
-%   Requires Statistics and Machine Learning Toolbox for tcdf.
-x  = x(:);
-n  = numel(x);
-t  = mean(x) / (std(x) / sqrt(n));
-pv = 2 * (1 - tcdf(abs(t), n - 1));
-end
