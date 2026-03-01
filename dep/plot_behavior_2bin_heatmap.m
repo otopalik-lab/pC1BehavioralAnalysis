@@ -1,4 +1,4 @@
-function plot_2bin_heatmap(line_input, behavior, SavePath, SaveFormat)
+function plot_behavior_2bin_heatmap(line_input, behavior, SavePath, SaveFormat)
 % PLOT_2BIN_HEATMAP  Plot a 2-bin (LED on / LED off, 30 s each) PSTH
 %                    heatmap for the specified behavior across SS lines,
 %                    with magenta scatter annotations marking lines
