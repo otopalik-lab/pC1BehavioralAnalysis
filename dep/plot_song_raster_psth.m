@@ -49,8 +49,8 @@ function fig = plot_song_raster_psth(line_input, dataset_type, varargin)
 %   audio_ref_bout      99                   18                   50
 %   raster_xlim         [5 20]               [-5 10]              [-5 10]
 %   psth_xlim           [5 20]               [0 15]               [0 15]
-%   ylim_pulse          [0 30]               [0 15]               [0 15]
-%   ylim_sine           [0 1500]             [0 2000]             [0 2000]
+%   ylim_pulse          [0 30]               [0 30]               [0 30]
+%   ylim_sine           [0 2000]             [0 2000]             [0 2000]
 %
 % ── ALIGNMENT NOTES ───────────────────────────────────────────────────────
 %   isolated_activation: 10-s pre/post window; LED onset displayed at 10 s
@@ -88,7 +88,7 @@ switch dataset_type
         def_raster_xlim    = [5 20];
         def_psth_xlim      = [5 20];
         def_ylim_pulse     = [0 30];
-        def_ylim_sine      = [0 1500];
+        def_ylim_sine      = [0 2000];
 
     case 'courting_activation'
         % 5-s pre/post window. Events aligned directly to LED onset (no
@@ -105,7 +105,7 @@ switch dataset_type
         def_audio_ref      = 18;
         def_raster_xlim    = [-5 10];
         def_psth_xlim      = [0 15];
-        def_ylim_pulse     = [0 15];
+        def_ylim_pulse     = [0 30];
         def_ylim_sine      = [0 2000];
 
     case 'courting_silencing'
@@ -123,7 +123,7 @@ switch dataset_type
         def_audio_ref      = 50;               % different bout for audio window
         def_raster_xlim    = [-5 10];
         def_psth_xlim      = [0 15];
-        def_ylim_pulse     = [0 15];
+        def_ylim_pulse     = [0 30];
         def_ylim_sine      = [0 2000];
 
     otherwise
