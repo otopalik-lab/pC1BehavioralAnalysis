@@ -169,9 +169,20 @@ t_win        = (0:windowLength-1) ./ FPS - pre_post_sec;
 % (expected total = numTrials × length(LEDStims)).
 valid_windows = zeros(0, 2);   % rows: [global_struct_index, onset_frame]
 
+% Reference field used solely to measure each trial's data length.
+% Prefer the first behavior field, then the first timeseries field, then
+% 'Distance' (always present — already used for copulation detection).
+if ~isempty(behavior_list)
+    len_ref_field = behavior_list{1};
+elseif ~isempty(timeseries_list)
+    len_ref_field = timeseries_list{1};
+else
+    len_ref_field = 'Distance';
+end
+
 for k = 1:numTrials
     % Use this trial's own behavior length as the validity boundary
-    trial_beh_len = double(length(FemaleMaleData(trial_inds(k)).(behavior_list{1})));
+    trial_beh_len = double(length(FemaleMaleData(trial_inds(k)).(len_ref_field)));
 
     LED_raw_k = double(FemaleMaleData(trial_inds(k)).LED)';
     % Detect epochs from the full LED vector (not truncated to beh_len).
