@@ -2,7 +2,7 @@ This repository contains code for the processing and analysis of behavioral data
 
 ## Getting Started
 
-1. After cloning this repository, users must download the figure source data and place this folder (data) in the repository's main directory (.../pC1_BehavioralAnalysis/data)
+1. After cloning this repository, users must download the figure source data and place this folder (data) in the repository's main directory (.../pC1_BehavioralAnalysis/data')
 
 2. Prior to running any scripts in MATLAB, the repository must be added to the MATLAB path: addpath(genpath('.../pC1_BehavioralAnalysis))
 
