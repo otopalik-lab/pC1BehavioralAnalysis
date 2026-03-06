@@ -18,4 +18,13 @@ load('FemaleMaleData_BaseWorkspace.mat')
 SaveFormat = '.png'; %can change this as desired (see 'save' function in MATLAB for available formats'
 SavePath = '/Users/otopalika/Documents/GitHub/pC1BehavioralAnalysis/results/figureS7'; % can change as desired
 
-%%
+%% Figure S7A: Heatmaps of behavioral probabilities over time across all pC1 SS Lines for all behavioral classes:
+
+binsize = 4000; %in milliseconds
+plot_femalemale_PSTH_heatmap('all','close', binsize) %'proximal is equivalent to 'close' in the paper
+plot_femalemale_PSTH_heatmap('all','m_orient', binsize)  
+plot_femalemale_PSTH_heatmap('all','m_behind',binsize)  
+plot_femalemale_PSTH_heatmap('all','m_approach',binsize)  
+plot_femalemale_PSTH_heatmap('all','m_unilateralwing',binsize)  
+plot_femalemale_PSTH_heatmap('all','m_still',binsize)  
+plot_femalemale_PSTH_heatmap('all','f_still',binsize)  
