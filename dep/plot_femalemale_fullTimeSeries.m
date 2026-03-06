@@ -140,8 +140,8 @@ if ~isempty(LED_epochs)
     for ep = max(1, size(LED_epochs,1)-2) : size(LED_epochs,1)
         x0 = double(LED_epochs(ep,1)) / double(FPS);
         x1 = double(LED_epochs(ep,2)) / double(FPS);
-        fill([x0 x1 x1 x0], [0 0 y_top y_top], [0 0 0], ...
-            'FaceAlpha', 0.1, 'EdgeColor', 'none');
+        % fill([x0 x1 x1 x0], [0 0 y_top y_top], [0 0 0], ...
+        %     'FaceAlpha', 0.1, 'EdgeColor', 'none');
         hold on;
     end
 end
