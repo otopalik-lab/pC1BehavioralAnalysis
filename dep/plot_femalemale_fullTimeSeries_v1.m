@@ -94,8 +94,17 @@ if length(LED_vec) < beh_len
 end
 LED_units = FemaleMaleData(trial_inds(1)).LEDunits;
 
-% Detect LED epochs from binarised trace
-LED_epochs = detect_binarybouts(LED_vec > 0);
+% Detect LED epochs from the full (untruncated) signal so that gaps between
+% epochs are preserved — truncating to beh_len can merge separate epochs
+% into one continuous block.
+LED_epochs = detect_binarybouts(LED_raw > 0);
+
+% Epoch indices to shade, matching LEDStims in plot_femalemale_STA.
+% Filter to indices that actually exist in this trial.
+LEDStims  = [2 3 4];
+shade_eps = LEDStims(LEDStims <= size(LED_epochs, 1));
+% Convert onset/offset frame indices to seconds for plotting
+shade_x   = double(LED_epochs(shade_eps, :)) ./ double(FPS);  % Nx2: [t_on, t_off]
 
 %% ── Determine continuous vs binary for each requested behavior ───────────
 known_continuous = {'Distance',    'FacingAngle', 'AngleBetween', ...
@@ -135,15 +144,11 @@ fig.Position = [100, 100, 500, 200 * numSubplots];
 %% Panel 1: LED stimulus trace ────────────────────────────────────────────
 subplot(numSubplots, 1, 1);
 led_max = max(LED_vec);
-if ~isempty(LED_epochs)
-    y_top = max(led_max * 2, 1);
-    for ep = max(1, size(LED_epochs,1)-2) : size(LED_epochs,1)
-        x0 = double(LED_epochs(ep,1)) / double(FPS);
-        x1 = double(LED_epochs(ep,2)) / double(FPS);
-        fill([x0 x1 x1 x0], [0 0 y_top y_top], [0 0 0], ...
-            'FaceAlpha', 0.1, 'EdgeColor', 'none');
-        hold on;
-    end
+y_top = max(led_max * 2, 1);
+for s = 1:size(shade_x, 1)
+    fill([shade_x(s,1) shade_x(s,2) shade_x(s,2) shade_x(s,1)], ...
+        [0 0 y_top y_top], [0 0 0], 'FaceAlpha', 0.1, 'EdgeColor', 'none');
+    hold on;
 end
 plot(t_beh, LED_vec, 'k-', 'LineWidth', 2);
 ylabel(['LED (' LED_units ')'], 'FontSize', 12);
@@ -156,6 +161,13 @@ box off;
 for b = 1:numBehaviors
     subplot(numSubplots, 1, b + 1);
     color = default_colors{mod(b-1, length(default_colors)) + 1};
+
+    % Shade LED epochs (large y-extent; ylim will clip to data range)
+    for s = 1:size(shade_x, 1)
+        fill([shade_x(s,1) shade_x(s,2) shade_x(s,2) shade_x(s,1)], ...
+            [-1e6 -1e6 1e6 1e6], [0 0 0], 'FaceAlpha', 0.1, 'EdgeColor', 'none');
+        hold on;
+    end
 
     if is_continuous(b)
         % Collect traces across trials, each truncated to beh_len
