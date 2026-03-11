@@ -30,7 +30,7 @@ function plot_femalemale_PSTH_heatmap(line_input, behavior, binsize, SavePath, S
 %% Tunable defaults
 pre_post_sec = 60;      % pre- and post-stimulus window (seconds)
 stim_dur_sec = 120;     % LED epoch duration (seconds)
-LEDStims     = [2 3 4]; % LED epoch indices (per trial) to pool
+LEDStims     = [3 4]; % LED epoch indices (per trial) to pool
 
 % Copulation detection parameters
 copulation_dist_mm = 4;
