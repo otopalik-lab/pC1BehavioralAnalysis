@@ -194,7 +194,12 @@ for idx = 1:numSelected
     if isempty(p_vals)
         data_by_line{idx} = NaN; % placeholder so group appears in boxplot
     else
-        data_by_line{idx} = p_vals(:);
+        p_vals = p_vals(:);
+        max_pts = 18 * length(LEDStims);
+        if length(p_vals) > max_pts
+            p_vals = p_vals(randperm(length(p_vals), max_pts));
+        end
+        data_by_line{idx} = p_vals;
     end
 end
 
