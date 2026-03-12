@@ -114,6 +114,27 @@ if n_cop_excl > 0
     end
 end
 
+%% ── Interaction filter (baseline close ≥ 30 % during 330–450 s) ─────────
+interact_win_start = round(330 * FPS) + 1;
+interact_win_end   = round(450 * FPS);
+if ismember('close', fieldNames) && numTrials > 0
+    keep_int = true(1, numTrials);
+    for k = 1:numTrials
+        c = double(FemaleMaleData(trial_inds(k)).close);
+        if length(c) < interact_win_end
+            keep_int(k) = false; continue;
+        end
+        if mean(c(interact_win_start : interact_win_end)) < 0.30
+            keep_int(k) = false;
+        end
+    end
+    trial_inds = trial_inds(keep_int);
+    numTrials  = length(trial_inds);
+    if numTrials == 0
+        error('No trials remain after interaction filter for driver "%s".', driver_str);
+    end
+end
+
 %% ── Build figure title ───────────────────────────────────────────────────
 try
     lines_ws     = evalin('base', 'lines');
