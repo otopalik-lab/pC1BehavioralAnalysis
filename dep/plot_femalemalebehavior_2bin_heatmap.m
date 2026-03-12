@@ -189,6 +189,13 @@ for idx = 1:numSelected
         numTrials  = length(trial_inds);
     end
 
+    % Cap at 18 trials (random subsample)
+    max_trials = 18;
+    if numTrials > max_trials
+        trial_inds = trial_inds(randperm(numTrials, max_trials));
+        numTrials  = max_trials;
+    end
+
     pre_trials  = NaN(numTrials, 1);
     stim_trials = NaN(numTrials, 1);
 
@@ -231,32 +238,31 @@ for idx = 1:numSelected
     SS_PSTHs(idx, 2) = mean(stim_by_line{idx}, 'omitnan');
 end
 
-%% Statistics: Wilcoxon rank-sum vs Empty Split, Bonferroni corrected
-sig_rows = cell(1, 2);
+%% Statistics: Wilcoxon rank-sum vs Empty Split (stim bin only), Bonferroni corrected
+% Significance is assessed within the stim bin only: each line's stim-window
+% p(behavior) is compared to Empty Split's stim-window p(behavior).
+% The pre-stim bin is shown in the heatmap for visual context but is not
+% used for significance testing.
+sig_stim = [];
 if do_stats && numSelected > 1
-    es_pre  = pre_by_line{ES_idx};
     es_stim = stim_by_line{ES_idx};
     n_comp  = numSelected - 1;
 
-    for bin = 1:2
-        if bin == 1; es_data = es_pre;  else; es_data = es_stim; end
-        sig_idx = [];
-        for idx = 1:numSelected
-            if idx == ES_idx; continue; end
-            if bin == 1; line_data = pre_by_line{idx}; else; line_data = stim_by_line{idx}; end
-            if isempty(line_data) || isempty(es_data); continue; end
-            try
-                [~, p] = ranksum(es_data, line_data);
-            catch ME
-                warning('ranksum failed for line %d: %s', idx, ME.message);
-                p = 1;
-            end
-            if p < (0.05 / n_comp)
-                sig_idx(end+1) = idx; %#ok<AGROW>
-            end
+    for idx = 1:numSelected
+        if idx == ES_idx; continue; end
+        line_data = stim_by_line{idx};
+        if isempty(line_data) || isempty(es_stim); continue; end
+        try
+            [~, p] = ranksum(es_stim, line_data);
+        catch ME
+            warning('ranksum failed for line %d: %s', idx, ME.message);
+            p = 1;
         end
-        sig_rows{bin} = unique(sig_idx);
+        if p < (0.05 / n_comp)
+            sig_stim(end+1) = idx; %#ok<AGROW>
+        end
     end
+    sig_stim = unique(sig_stim);
 end
 
 %% Plot heatmap
@@ -288,16 +294,13 @@ if ~isempty(color_limits)
     h_prob.ColorLimits = color_limits;
 end
 
-%% Annotate significant lines with magenta dots
+%% Annotate significant lines with magenta dots (stim bin only)
 annot_color = [220 38 127] ./ 255;   % magenta (#DC267F)
 ax = struct(h_prob).Axes;
 hold(ax, 'on');
-for bin = 1:2
-    sig = sig_rows{bin};
-    if ~isempty(sig)
-        scatter(ax, bin * ones(length(sig), 1), sig, 15, 'filled', ...
-                'MarkerFaceColor', annot_color);
-    end
+if ~isempty(sig_stim)
+    scatter(ax, 2 * ones(length(sig_stim), 1), sig_stim, 15, 'filled', ...
+            'MarkerFaceColor', annot_color);
 end
 
 %% Horizontal colorbar
