@@ -147,10 +147,12 @@ else
     do_stats = true;
 end
 
-%% Collect per-trial bin means for each line
-% For each trial, average p(behavior) across valid LEDStims windows.
-% pre_by_line{idx}  — vector of per-trial means for the pre-stim bin
-% stim_by_line{idx} — vector of per-trial means for the stim bin
+%% Collect per-window p(behavior) for each line
+% Each valid peri-stimulus window (trial × LEDStim) contributes one value
+% to both the pre and stim bins.  Total data points per line ≤ 18 trials ×
+% length(LEDStims).  This matches the strategy in plot_femalemale_behavior_boxplot.
+% pre_by_line{idx}  — per-window p(behavior) for the pre-stim bin
+% stim_by_line{idx} — per-window p(behavior) for the stim bin
 pre_by_line  = cell(numSelected, 1);
 stim_by_line = cell(numSelected, 1);
 
@@ -196,8 +198,8 @@ for idx = 1:numSelected
         numTrials  = max_trials;
     end
 
-    pre_trials  = NaN(numTrials, 1);
-    stim_trials = NaN(numTrials, 1);
+    pre_vals  = [];
+    stim_vals = [];
 
     for k = 1:numTrials
         trial_beh_len = length(FemaleMaleData(trial_inds(k)).(behavior));
@@ -207,28 +209,20 @@ for idx = 1:numSelected
         if n_ep_k == 0; continue; end
 
         stim_inds_k = LEDStims(LEDStims <= n_ep_k);
-        pre_wins  = [];
-        stim_wins = [];
-
         for j = stim_inds_k
             onset     = epochs_k(j, 1);
             pre_start = onset - bin_frames;
             stim_end  = onset + bin_frames - 1;
             if pre_start >= 1 && stim_end <= trial_beh_len
-                seg              = double(FemaleMaleData(trial_inds(k)).(behavior));
-                pre_wins(end+1)  = mean(seg(pre_start : onset - 1)); %#ok<AGROW>
-                stim_wins(end+1) = mean(seg(onset     : stim_end));  %#ok<AGROW>
+                seg               = double(FemaleMaleData(trial_inds(k)).(behavior));
+                pre_vals(end+1)   = mean(seg(pre_start : onset - 1)); %#ok<AGROW>
+                stim_vals(end+1)  = mean(seg(onset     : stim_end));  %#ok<AGROW>
             end
-        end
-
-        if ~isempty(pre_wins)
-            pre_trials(k)  = mean(pre_wins);
-            stim_trials(k) = mean(stim_wins);
         end
     end
 
-    pre_by_line{idx}  = pre_trials(~isnan(pre_trials));
-    stim_by_line{idx} = stim_trials(~isnan(stim_trials));
+    pre_by_line{idx}  = pre_vals(:);
+    stim_by_line{idx} = stim_vals(:);
 end
 
 %% Compute line-level means for heatmap color values
