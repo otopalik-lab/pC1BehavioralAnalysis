@@ -41,10 +41,10 @@ plot_femalemale_PSTH_heatmap('all','m_still',binsize)
 plot_femalemale_behavior_boxplot('all', 'close')
 plot_femalemale_behavior_boxplot('all', 'm_orient')
 plot_femalemale_behavior_boxplot('all', 'm_behind')
-plot_femalemale_behavior_boxplot('all', 'm_chase')
+plot_femalemale_behavior_boxplot('all', 'chase')
 plot_femalemale_behavior_boxplot('all', 'm_approach')
-plot_femalemale_behavior_boxplot('all', 'm_unilteralwing')
+plot_femalemale_behavior_boxplot('all', 'm_unilateralwing')
 plot_femalemale_behavior_boxplot('all', 'm_still')
 
 
-%%
+%% Figure S7C:

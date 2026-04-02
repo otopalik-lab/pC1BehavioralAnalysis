@@ -81,7 +81,7 @@ switch dataset_type
         plot_offset_sec = 2 * pre_samples / 5000;  % = 20; LED onset → 10 s on raster
         def_plotbouts      = 96:100;
         def_select_trials  = [];               % [] = all trials
-        def_audio_trial    = randi(20);
+        def_audio_trial    = [];
         def_audio_ylim     = [-0.15 0.25];
         def_led_ref        = 99;
         def_audio_ref      = 99;
@@ -99,7 +99,7 @@ switch dataset_type
         plot_offset_sec = 0;                   % LED onset at 0 s on raster
         def_plotbouts      = 42:46;
         def_select_trials  = [];
-        def_audio_trial    = randi(20);
+        def_audio_trial    = [];
         def_audio_ylim     = [];               % [] = auto-scale
         def_led_ref        = 18;
         def_audio_ref      = 18;
@@ -117,7 +117,7 @@ switch dataset_type
         plot_offset_sec = 0;
         def_plotbouts      = 41:45;
         def_select_trials  = [];               % [] = all trials
-        def_audio_trial    = randi(20);
+        def_audio_trial    = [];
         def_audio_ylim     = [-0.15 0.25];
         def_led_ref        = 18;
         def_audio_ref      = 50;               % different bout for audio window
@@ -135,7 +135,7 @@ end
 ip = inputParser;
 ip.addParameter('plotbouts',     def_plotbouts,    @isnumeric);
 ip.addParameter('select_trials', def_select_trials,@isnumeric);
-ip.addParameter('audio_trial',   def_audio_trial,  @(x) isnumeric(x) && isscalar(x));
+ip.addParameter('audio_trial',   def_audio_trial,  @(x) isnumeric(x) && (isempty(x) || isscalar(x)));
 ip.addParameter('audio_ylim',    def_audio_ylim,   @(x) isnumeric(x) && (isempty(x) || numel(x)==2));
 ip.addParameter('led_ref_bout',  def_led_ref,      @(x) isnumeric(x) && isscalar(x));
 ip.addParameter('audio_ref_bout',def_audio_ref,    @(x) isnumeric(x) && isscalar(x));
@@ -186,6 +186,11 @@ if isempty(opts.select_trials)
     trial_list = 1:length(data(line_idx).trial_idx);
 else
     trial_list = opts.select_trials;
+end
+
+% Resolve audio_trial now that we know the actual trial count
+if isempty(opts.audio_trial)
+    opts.audio_trial = trial_list(randi(length(trial_list)));
 end
 
 audio_pre = 25000;   % fixed 5-s audio window half-width (all datasets)
