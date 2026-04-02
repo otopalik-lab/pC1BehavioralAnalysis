@@ -1,10 +1,15 @@
-function fig = plot_femalemale_fullTimeSeries(line_input, behavior_list, SavePath, SaveFormat)
+function fig = plot_femalemale_fullTimeSeries(line_input, behavior_list, timeseries_list, SavePath, SaveFormat)
 %PLOT_FEMALEMALE_FULLTIMESERIES  LED-aligned raster/trace plots for
 %   female–male interaction data for a specified driver line.
 %
-%   For binary behavior fields:     tick-mark raster, one row per trial.
-%   For continuous fields:          mean ± SEM shaded trace across trials.
-%   Continuous fields are auto-detected; the following are always treated
+%   For binary behavior fields (behavior_list):
+%       tick-mark raster, one row per trial.
+%   For continuous fields (behavior_list):
+%       mean ± SEM shaded trace across trials (auto-detected or known).
+%   For explicitly requested timeseries (timeseries_list):
+%       mean ± SEM shaded trace, one subplot per field, appended below
+%       the behavior panels.
+%   Continuous fields auto-detected; the following are always treated
 %   as continuous: Distance, FacingAngle, AngleBetween, MaleVelocity,
 %   FemaleVelocity. Any field whose values lie outside {0,1} is also
 %   treated as continuous.
@@ -13,20 +18,25 @@ function fig = plot_femalemale_fullTimeSeries(line_input, behavior_list, SavePat
 %
 % ── USAGE ─────────────────────────────────────────────────────────────────
 %   plot_femalemale_fullTimeSeries('SS102671', {'close', 'chase'})
-%   plot_femalemale_fullTimeSeries('SS102671', ...
-%       {'close', 'chase', 'Distance', 'MaleVelocity'}, ...
-%       '/save/dir', '.pdf')
+%   plot_femalemale_fullTimeSeries('SS102671', {'close', 'chase'}, ...
+%       {'Distance', 'FacingAngle'})
+%   plot_femalemale_fullTimeSeries('SS102671', {'close', 'chase'}, ...
+%       {'Distance', 'AngleBetween'}, '/save/dir', '.pdf')
 %
 % ── REQUIRED INPUTS ───────────────────────────────────────────────────────
-%   line_input     String matching FemaleMaleData.driver (e.g., 'SS102671')
-%                  or a numeric vector of row indices into FemaleMaleData.
-%   behavior_list  Cell array of FemaleMaleData field names to plot, e.g.
-%                  {'close', 'chase', 'Distance', 'MaleVelocity'}
+%   line_input       String matching FemaleMaleData.driver (e.g., 'SS102671')
+%                    or a numeric vector of row indices into FemaleMaleData.
+%   behavior_list    Cell array of FemaleMaleData field names for the raster
+%                    panels, e.g. {'close', 'chase', 'm_orient'}
 %
 % ── OPTIONAL INPUTS ───────────────────────────────────────────────────────
-%   SavePath       Directory in which to save the figure
-%   SaveFormat     File format string, e.g. '.pdf', '.png', '.svg'
-%                  Both SavePath and SaveFormat must be provided to save.
+%   timeseries_list  Cell array of continuous field names to plot as
+%                    mean ± SEM traces below the behavior panels, e.g.
+%                    {'Distance', 'FacingAngle', 'AngleBetween'}.
+%                    Pass {} or omit to skip.
+%   SavePath         Directory in which to save the figure
+%   SaveFormat       File format string, e.g. '.pdf', '.png', '.svg'
+%                    Both SavePath and SaveFormat must be provided to save.
 %
 % ── BASE WORKSPACE REQUIREMENTS ───────────────────────────────────────────
 %   FemaleMaleData   struct array — see field list in function header
@@ -34,6 +44,12 @@ function fig = plot_femalemale_fullTimeSeries(line_input, behavior_list, SavePat
 %
 % ── OUTPUT ────────────────────────────────────────────────────────────────
 %   fig   figure handle
+
+%% ── Handle optional timeseries_list ─────────────────────────────────────
+if nargin < 3 || isempty(timeseries_list)
+    timeseries_list = {};
+end
+numTimeseries = length(timeseries_list);
 
 %% ── Load from base workspace ─────────────────────────────────────────────
 FemaleMaleData = evalin('base', 'FemaleMaleData');
@@ -56,6 +72,43 @@ end
 numTrials = length(trial_inds);
 FPS       = FemaleMaleData(trial_inds(1)).FPS;
 
+%% ── Exclude trials with < 30 % close during 330–450 s ───────────────────
+% Trials where the animals are not interacting at baseline are excluded.
+interact_win_start = round(330 * FPS) + 1;
+interact_win_end   = round(450 * FPS);
+if ismember('close', fieldNames)
+    keep = true(1, numTrials);
+    for k = 1:numTrials
+        c = double(FemaleMaleData(trial_inds(k)).close);
+        if length(c) < interact_win_end
+            keep(k) = false;   % trial too short to assess
+            continue;
+        end
+        seg = c(interact_win_start : interact_win_end);
+        if mean(seg) < 0.30
+            keep(k) = false;
+        end
+    end
+    trial_inds = trial_inds(keep);
+    numTrials  = length(trial_inds);
+    if numTrials == 0
+        warning('No trials remain after interaction filter for driver "%s".', driver_str);
+        fig = figure;
+        return;
+    end
+end
+
+%% ── Cap at 18 trials (random subsample) ─────────────────────────────────
+max_trials = 18;
+if numTrials > max_trials
+    rng('shuffle');
+    n_total    = numTrials;
+    trial_inds = trial_inds(randperm(n_total, max_trials));
+    numTrials  = max_trials;
+    fprintf('Randomly selected %d of %d available trials for driver "%s".\n', ...
+        max_trials, n_total, driver_str);
+end
+
 %% ── Build figure title ───────────────────────────────────────────────────
 try
     lines_ws     = evalin('base', 'lines');
@@ -77,10 +130,18 @@ for b = 1:length(behavior_list)
     end
 end
 
-%% ── Common behavior vector length (minimum across all trials) ────────────
+%% ── Validate timeseries fields ───────────────────────────────────────────
+for s = 1:numTimeseries
+    if ~ismember(timeseries_list{s}, fieldNames)
+        error('Timeseries field "%s" not found in FemaleMaleData. Check spelling.', timeseries_list{s});
+    end
+end
+
+%% ── Common vector length (minimum across all trials, first behavior field) ─
 beh_len = inf;
+ref_field = behavior_list{1};   % use first behavior field as length reference
 for k = 1:numTrials
-    beh_len = min(beh_len, length(FemaleMaleData(trial_inds(k)).(behavior_list{1})));
+    beh_len = min(beh_len, length(FemaleMaleData(trial_inds(k)).(ref_field)));
 end
 beh_len = double(beh_len);
 t_beh   = (0:beh_len-1) ./ FPS;   % time axis starting at 0 s
@@ -123,25 +184,33 @@ for b = 1:numBehaviors
     end
 end
 
-%% ── Color palette ────────────────────────────────────────────────────────
-default_colors = {'#648FFF', '#DC267F', '#FE6100', '#785EF0', '#FFB000', ...
-                  '#009E73', '#56B4E9', '#E69F00', '#CC79A7', '#0072B2'};
+%% ── Build ylabel for each timeseries panel ───────────────────────────────
+ts_ylabel = cell(numTimeseries, 1);
+for s = 1:numTimeseries
+    idx_known = strcmp(timeseries_list{s}, known_continuous);
+    if any(idx_known)
+        ts_ylabel{s} = [strrep(timeseries_list{s}, '_', ' ') ' (' known_units{idx_known} ')'];
+    else
+        ts_ylabel{s} = strrep(timeseries_list{s}, '_', ' ');
+    end
+end
+
+%% ── Color palette (converted to RGB triplets for fill/patch compatibility) ─
+hex_palette = {'#648FFF', '#DC267F', '#FE6100', '#785EF0', '#FFB000', ...
+               '#009E73', '#56B4E9', '#E69F00', '#CC79A7', '#0072B2'};
+default_colors = cellfun(@(h) sscanf(h(2:end), '%2x%2x%2x', [1 3])' / 255, ...
+                         hex_palette, 'UniformOutput', false);
 
 %% ── Build figure ─────────────────────────────────────────────────────────
-numSubplots = numBehaviors + 1;
+numSubplots = 1 + numBehaviors + numTimeseries;
 fig = figure; clf;
-fig.Position = [100, 100, 500, 200 * numSubplots];
+fig.Position = [100, 100, 700, 200 * numSubplots];
 
 %% Panel 1: LED stimulus trace ────────────────────────────────────────────
 subplot(numSubplots, 1, 1);
 led_max = max(LED_vec);
 if ~isempty(LED_epochs)
-    y_top = max(led_max * 2, 1);
     for ep = max(1, size(LED_epochs,1)-2) : size(LED_epochs,1)
-        x0 = double(LED_epochs(ep,1)) / double(FPS);
-        x1 = double(LED_epochs(ep,2)) / double(FPS);
-        % fill([x0 x1 x1 x0], [0 0 y_top y_top], [0 0 0], ...
-        %     'FaceAlpha', 0.1, 'EdgeColor', 'none');
         hold on;
     end
 end
@@ -152,7 +221,7 @@ ylim([0, max(led_max * 1.2, eps)]);
 title(title_str);
 box off;
 
-%% Panels 2–N+1: one per behavior ─────────────────────────────────────────
+%% Panels 2 – (numBehaviors+1): one per behavior ──────────────────────────
 for b = 1:numBehaviors
     subplot(numSubplots, 1, b + 1);
     color = default_colors{mod(b-1, length(default_colors)) + 1};
@@ -165,9 +234,12 @@ for b = 1:numBehaviors
             n = min(beh_len, length(d));
             traces(k, 1:n) = d(1:n);
         end
-        mu  = mean(traces, 1);
-        sem = std(traces, 0, 1) ./ sqrt(numTrials);
-        shplot(t_beh, mu, sem, 'Color', color);
+        mu  = mean(traces, 1);  mu  = mu(:)';
+        sem = std(traces, 0, 1) ./ sqrt(numTrials);  sem = sem(:)';
+        hold on;
+        fill([t_beh, fliplr(t_beh)], [mu + sem, fliplr(mu - sem)], ...
+            color, 'FaceAlpha', 0.25, 'EdgeColor', 'none');
+        plot(t_beh, mu, 'Color', color, 'LineWidth', 1.5);
         xlim([t_beh(1), t_beh(end)]);
 
     else
@@ -188,14 +260,48 @@ for b = 1:numBehaviors
     end
 
     ylabel(beh_ylabel{b}, 'FontSize', 12);
-    if b == numBehaviors
+    % x-axis label on the last panel (behavior or timeseries)
+    if b == numBehaviors && numTimeseries == 0
+        xlabel('Time (s)', 'FontSize', 12);
+    end
+    box off;
+end
+
+%% Panels (numBehaviors+2) – end: one mean±SEM trace per timeseries ────────
+for s = 1:numTimeseries
+    panel_idx = 1 + numBehaviors + s;
+    subplot(numSubplots, 1, panel_idx);
+    color = default_colors{mod(numBehaviors + s - 1, length(default_colors)) + 1};
+
+    % Collect traces across trials
+    traces = zeros(numTrials, beh_len);
+    for k = 1:numTrials
+        d = double(FemaleMaleData(trial_inds(k)).(timeseries_list{s}));
+        n = min(beh_len, length(d));
+        traces(k, 1:n) = d(1:n);
+    end
+    mu  = mean(traces, 1);
+    sem = std(traces, 0, 1) ./ sqrt(numTrials);
+
+    shplot(t_beh, mu, sem, 'Color', color);
+    xlim([t_beh(1), t_beh(end)]);
+    switch timeseries_list{s}
+        case 'Distance';       ylim([0   15]);
+        case 'FacingAngle';    ylim([0   90]);
+        case 'AngleBetween';   ylim([90 180]);
+        case 'MaleVelocity';   ylim([0   30]);
+        case 'FemaleVelocity'; ylim([0   30]);
+    end
+
+    ylabel(ts_ylabel{s}, 'FontSize', 12);
+    if s == numTimeseries
         xlabel('Time (s)', 'FontSize', 12);
     end
     box off;
 end
 
 %% ── Save (optional) ──────────────────────────────────────────────────────
-if nargin >= 3 && ~isempty(SavePath) && nargin >= 4 && ~isempty(SaveFormat)
+if nargin >= 4 && ~isempty(SavePath) && nargin >= 5 && ~isempty(SaveFormat)
     if ~exist(SavePath, 'dir'), mkdir(SavePath); end
     safe_name = regexprep(driver_str, '[\\/ ,]', '_');
     saveas(fig, fullfile(SavePath, [safe_name '_femalemale_fullTimeSeries' SaveFormat]));

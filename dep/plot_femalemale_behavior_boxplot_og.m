@@ -2,7 +2,7 @@ function plot_femalemale_behavior_boxplot(line_input, behavior, SavePath, SaveFo
 %PLOT_FEMALEMALE_BEHAVIOR_BOXPLOT  Boxplot of per-window p(behavior) during
 %   the stimulus epoch for female–male data, with overlaid jittered scatter.
 %   Lines significantly different from the Empty Split control are annotated
-%   in magenta (one-way ANOVA + Dunn-Šidák post-hoc, α = 0.05).
+%   in magenta (one-way ANOVA + Dunn-Šidák post-hoc, α = 0.01).
 %
 %   Each data point is the fraction of stimulus frames where the behavior
 %   was active (p = 1) for a single valid peri-stimulus window. Windows are
@@ -169,6 +169,24 @@ for idx = 1:numSelected
     end
     trial_inds = trial_inds(~is_cop_trial);
     numTrials  = length(trial_inds);
+
+    % Interaction filter: exclude trials with < 30% close during 330–450 s
+    interact_win_start = round(330 * FPS) + 1;
+    interact_win_end   = round(450 * FPS);
+    if ismember('close', fieldNames) && numTrials > 0
+        keep_int = true(1, numTrials);
+        for k = 1:numTrials
+            c = double(FemaleMaleData(trial_inds(k)).close);
+            if length(c) < interact_win_end
+                keep_int(k) = false; continue;
+            end
+            if mean(c(interact_win_start : interact_win_end)) < 0.30
+                keep_int(k) = false;
+            end
+        end
+        trial_inds = trial_inds(keep_int);
+        numTrials  = length(trial_inds);
+    end
 
     p_vals = [];
     for k = 1:numTrials
