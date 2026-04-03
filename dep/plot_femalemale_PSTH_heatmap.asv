@@ -1,0 +1,343 @@
+function plot_femalemale_PSTH_heatmap(line_input, behavior, binsize, SavePath, SaveFormat)
+%PLOT_FEMALEMALE_PSTH_HEATMAP  Peri-stimulus PSTH heatmap for female–male data.
+%
+%   Each row of the heatmap is a driver line. The PSTH for each line is
+%   computed by pooling event times across all valid peri-stimulus windows
+%   (pre_post_sec before LED onset through pre_post_sec after LED offset)
+%   for the specified LEDStims epochs. Experiments with putative copulation
+%   are excluded before windowing.
+%
+% INPUTS:
+%   line_input  - Lines to display as heatmap rows. Accepted formats:
+%                   'all'           → all unique drivers in FemaleMaleData
+%                   char/string     → single driver, e.g. 'SS102671'
+%                   cell array      → subset, e.g. {'SS102671','SS03661'}
+%                   numeric vector  → indices into unique driver list
+%   behavior    - Behavior field name in FemaleMaleData (e.g., 'close')
+%   binsize     - PSTH bin width in milliseconds (e.g., 1000 for 1-s bins)
+%   SavePath    - (optional) Directory in which to save the figure
+%   SaveFormat  - (optional) File format string, e.g. '.pdf' or '.png'
+%                 Both SavePath and SaveFormat must be provided to save.
+%
+% EXAMPLE:
+%   plot_femalemale_PSTH_heatmap('all', 'close', 1000)
+%   plot_femalemale_PSTH_heatmap({'SS102671','SS03661'}, 'chase', 1000, '/save/path', '.pdf')
+%
+% BASE WORKSPACE REQUIREMENTS:
+%   FemaleMaleData    struct array with per-trial behavioral fields
+%   lines, celltypes  (optional) for y-axis labels
+
+%% Tunable defaults
+pre_post_sec = 60;      % pre- and post-stimulus window (seconds)
+stim_dur_sec = 120;     % LED epoch duration (seconds)
+LEDStims     = [3 4]; % LED epoch indices (per trial) to pool
+
+% Copulation detection parameters
+copulation_dist_mm = 4;
+copulation_dur_sec = 60;
+
+%% Load from base workspace
+FemaleMaleData = evalin('base', 'FemaleMaleData');
+fieldNames     = fieldnames(FemaleMaleData);
+
+%% Validate behavior field
+if ~ismember(behavior, fieldNames)
+    error('Field "%s" not found in FemaleMaleData. Check spelling.', behavior);
+end
+
+%% Get unique driver list and build y-axis labels
+all_drivers_raw = unique({FemaleMaleData.driver}, 'stable');
+
+try
+    lines_ws      = evalin('base', 'lines');
+    celltypes_ws  = evalin('base', 'celltypes');
+    has_ws_labels = true;
+catch
+    has_ws_labels = false;
+end
+
+% Order drivers according to lines_ws when available; unmatched go at the end
+if has_ws_labels
+    ordered = {};
+    for i = 1:length(lines_ws)
+        for d = 1:length(all_drivers_raw)
+            if contains(lines_ws{i}, all_drivers_raw{d}) && ~ismember(all_drivers_raw{d}, ordered)
+                ordered{end+1} = all_drivers_raw{d}; %#ok<AGROW>
+            end
+        end
+    end
+    for d = 1:length(all_drivers_raw)
+        if ~ismember(all_drivers_raw{d}, ordered)
+            ordered{end+1} = all_drivers_raw{d}; %#ok<AGROW>
+        end
+    end
+    all_drivers = ordered;
+else
+    all_drivers = all_drivers_raw;
+end
+numDrivers = length(all_drivers);
+
+% Build y-axis labels
+labels = cell(numDrivers, 1);
+for i = 1:numDrivers
+    if has_ws_labels
+        m = find(contains(lines_ws, all_drivers{i}), 1);
+        if ~isempty(m)
+            labels{i} = erase([lines_ws{m} ' | ' celltypes_ws{m}], '\');
+        else
+            labels{i} = all_drivers{i};
+        end
+    else
+        labels{i} = all_drivers{i};
+    end
+end
+
+%% Resolve line_input to indices into all_drivers
+if isnumeric(line_input)
+    driver_inds = line_input(:)';
+elseif ischar(line_input) || isstring(line_input)
+    if strcmpi(line_input, 'all')
+        driver_inds = 1:numDrivers;
+    else
+        matches = find(strcmp(all_drivers, char(line_input)));
+        if isempty(matches)
+            matches = find(contains(labels, char(line_input)));
+        end
+        if isempty(matches)
+            error('Driver "%s" not found in FemaleMaleData.', line_input);
+        elseif numel(matches) > 1
+            warning('Multiple matches for "%s"; using index %d.', line_input, matches(1));
+        end
+        driver_inds = matches(1);
+    end
+elseif iscell(line_input)
+    driver_inds = [];
+    for s = 1:numel(line_input)
+        m = find(strcmp(all_drivers, line_input{s}));
+        if isempty(m)
+            m = find(contains(labels, line_input{s}));
+        end
+        if isempty(m)
+            warning('Driver "%s" not found, skipping.', line_input{s});
+        else
+            driver_inds(end+1) = m(1); %#ok<AGROW>
+        end
+    end
+else
+    error('line_input must be ''all'', a string, a cell array, or a numeric index vector.');
+end
+
+if isempty(driver_inds)
+    error('No valid drivers resolved from line_input.');
+end
+
+%% Window parameters
+FPS                   = FemaleMaleData(1).FPS;
+pre_frames            = round(pre_post_sec * FPS);
+stim_frames           = round(stim_dur_sec  * FPS);
+windowLength          = pre_frames + stim_frames + pre_frames;
+copulation_dur_frames = round(copulation_dur_sec * FPS);
+
+%% Compute per-line PSTH (pooled across trials and stim epochs)
+numSelected = length(driver_inds);
+psth_cells  = cell(numSelected, 1);
+
+for idx = 1:numSelected
+    driver_str = all_drivers{driver_inds(idx)};
+    trial_inds = find(strcmp({FemaleMaleData.driver}, driver_str));
+    numTrials  = length(trial_inds);
+
+    % Copulation exclusion
+    is_cop_trial = false(1, numTrials);
+    for k = 1:numTrials
+        dist_full = double(FemaleMaleData(trial_inds(k)).Distance);
+        below     = double(dist_full < copulation_dist_mm);
+        if any(conv(below, ones(1, copulation_dur_frames), 'valid') >= copulation_dur_frames)
+            is_cop_trial(k) = true;
+        end
+    end
+    trial_inds = trial_inds(~is_cop_trial);
+    numTrials  = length(trial_inds);
+
+    % Interaction filter: exclude trials with < 30% close during 330–450 s
+    interact_win_start = round(330 * FPS) + 1;
+    interact_win_end   = round(450 * FPS);
+    if ismember('close', fieldNames) && numTrials > 0
+        keep_int = true(1, numTrials);
+        for k = 1:numTrials
+            c = double(FemaleMaleData(trial_inds(k)).close);
+            if length(c) < interact_win_end
+                keep_int(k) = false; continue;
+            end
+            if mean(c(interact_win_start : interact_win_end)) < 0.30
+                keep_int(k) = false;
+            end
+        end
+        trial_inds = trial_inds(keep_int);
+        numTrials  = length(trial_inds);
+    end
+
+    event_times_all = [];
+    n_valid_windows = 0;
+
+    for k = 1:numTrials
+        trial_beh_len = length(FemaleMaleData(trial_inds(k)).(behavior));
+        LED_raw_k     = double(FemaleMaleData(trial_inds(k)).LED)';
+        epochs_k      = detect_binarybouts(LED_raw_k > 0);
+        n_ep_k        = size(epochs_k, 1);
+        if n_ep_k == 0; continue; end
+
+        stim_inds_k = LEDStims(LEDStims <= n_ep_k);
+        for j = stim_inds_k
+            onset     = epochs_k(j, 1);
+            win_start = onset - pre_frames + 1;
+            win_end   = onset + stim_frames + pre_frames;
+            if win_start >= 1 && win_end <= trial_beh_len
+                seg             = double(FemaleMaleData(trial_inds(k)).(behavior));
+                ev              = find(seg(win_start : win_end) == 1);
+                event_times_all = [event_times_all, ev]; %#ok<AGROW>
+                n_valid_windows = n_valid_windows + 1;
+            end
+        end
+    end
+
+    if n_valid_windows > 0
+        [psth_row, ~]  = psth(event_times_all, binsize, FPS, n_valid_windows, windowLength);
+        psth_cells{idx} = psth_row(1:end-1); % drop histc trailing overflow bin
+    end
+end
+
+% Determine number of bins from first successful PSTH
+n_bins = 0;
+for idx = 1:numSelected
+    if ~isempty(psth_cells{idx})
+        n_bins = length(psth_cells{idx});
+        break;
+    end
+end
+if n_bins == 0
+    error('No valid peri-stimulus windows found for any selected driver.');
+end
+
+SS_PSTHs_all = zeros(numSelected, n_bins);
+for idx = 1:numSelected
+    if ~isempty(psth_cells{idx})
+        SS_PSTHs_all(idx, :) = psth_cells{idx};
+    end
+end
+
+%% Colormap and color limits
+cmap         = flipud(gray);
+color_limits = [];
+switch behavior
+    case 'close'
+        try; cmap = evalin('base', 'orange_map'); catch; end
+        color_limits = [0 1];
+    case 'm_orient'
+        try; cmap = evalin('base', 'blue_map'); catch; end
+        color_limits = [0 1];
+    case 'm_behind'
+        try; cmap = evalin('base', 'magenta_map'); catch; end
+        color_limits = [0 0.8];
+    case 'm_approach'
+        try; cmap = evalin('base', 'magenta_map'); catch; end
+        color_limits = [0 0.5];
+    case 'm_unilateralwing'
+        try; cmap = evalin('base', 'magenta_map'); catch; end
+        color_limits = [0 0.5];
+    case 'm_wingflick'
+        try; cmap = evalin('base', 'magenta_map'); catch; end
+        color_limits = [0 0.001];
+    case 'f_wingflick'
+        try; cmap = evalin('base', 'magenta_map'); catch; end
+        color_limits = [0 0.001];        
+    case 'm_still'
+        try; cmap = evalin('base', 'magenta_map'); catch; end
+        color_limits = [0 1];
+    case 'f_still'
+        try; cmap = evalin('base', 'magenta_map'); catch; end
+        color_limits = [0 0.5];
+    case 'aggression'
+        try; cmap = evalin('base', 'magenta_map'); catch; end
+        color_limits = [0 0.025];  
+    case 'tussle'
+        try; cmap = evalin('base', 'magenta_map'); catch; end
+        color_limits = [0 0.025];   
+    case 'headbutt'
+        try; cmap = evalin('base', 'magenta_map'); catch; end
+        color_limits = [0 0.025];   
+    case 'boxing'
+        try; cmap = evalin('base', 'magenta_map'); catch; end
+        color_limits = [0 0.025];   
+
+end
+
+%% Plot heatmap
+f = figure('Position', [1000 500 250 700]);
+h = heatmap(f, SS_PSTHs_all ./ FPS);
+h.YDisplayLabels        = labels(driver_inds);
+binsize_sec  = binsize / 1000;
+total_sec    = windowLength / FPS;
+tick_times   = 0 : 30 : total_sec;
+xlabels      = repmat({''}, 1, n_bins);
+for t = tick_times
+    bin_idx = round(t / binsize_sec) + 1;
+    if bin_idx >= 1 && bin_idx <= n_bins
+        xlabels{bin_idx} = num2str(t);
+    end
+end
+h.XDisplayLabels        = xlabels;
+h.Colormap              = cmap;
+if ~isempty(color_limits)
+    h.ColorLimits       = color_limits;
+end
+h.ColorbarVisible       = 'off';
+h.Title                 = ['p(' behavior ')'];
+h.FontSize              = 9;
+h.GridVisible           = 'off';
+h.Interpreter           = 'none';
+h.Position              = [0.5, 0.15, 0.4, 0.80]; % leave room at bottom for colorbar
+
+% Suppress heatmap's own ticks (categorical ruler can't take numeric XTick)
+drawnow;  % ensure heatmap finishes rendering before modifying axes
+ax = struct(h).Axes;
+ax.Box              = 'off';
+ax.XAxis.TickLength = [0 0];
+ax.YAxis.TickLength = [0 0];
+
+% Overlay a transparent axes to draw downward tick marks at 30-s intervals
+tick_bin_pos = round(tick_times / binsize_sec) + 1;
+valid_mask   = tick_bin_pos >= 1 & tick_bin_pos <= n_bins;
+tax = axes(f, 'Position', ax.Position, ...
+    'Color', 'none', 'Box', 'off', ...
+    'XLim', [0.5, n_bins + 0.5], 'YLim', [0 1], ...
+    'XTick', tick_bin_pos(valid_mask), ...
+    'XTickLabel', repmat({''}, 1, sum(valid_mask)), ...
+    'YTick', [], 'YColor', 'none', 'XColor', 'k', ...
+    'TickDir', 'out', 'TickLength', [0.005 0.005], ...
+    'FontSize', 9);
+
+%% Horizontal colorbar drawn as an imagesc gradient strip below the heatmap
+clim_vals = color_limits;
+if isempty(clim_vals)
+    clim_vals = [min(SS_PSTHs_all(:)), max(SS_PSTHs_all(:))] ./ FPS;
+end
+n     = 256;
+cb_ax = axes(f, 'Position', [0.2, 0.1, 0.6, 0.02]);
+imagesc(cb_ax, linspace(clim_vals(1), clim_vals(2), n), 1, (1:n));
+colormap(cb_ax, cmap);
+cb_ax.YTick    = [];
+cb_ax.XLim     = [0 clim_vals(2)];%clim_vals;
+cb_ax.TickDir  = 'out';
+cb_ax.FontSize = 10;
+xlabel(cb_ax, ['p(' behavior ')'], 'FontSize', 10, 'Interpreter', 'none');
+
+%% Save (optional — only if both SavePath and SaveFormat are provided)
+if nargin == 5
+    if ~exist(SavePath, 'dir')
+        mkdir(SavePath);
+    end
+    saveas(f, fullfile(SavePath, [behavior '_femalemale_PSTH_heatmap' SaveFormat]));
+end
+
+end

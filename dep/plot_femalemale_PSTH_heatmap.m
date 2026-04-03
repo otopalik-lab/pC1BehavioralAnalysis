@@ -203,7 +203,7 @@ for idx = 1:numSelected
 
     if n_valid_windows > 0
         [psth_row, ~]  = psth(event_times_all, binsize, FPS, n_valid_windows, windowLength);
-        psth_cells{idx} = psth_row;
+        psth_cells{idx} = psth_row(1:end-1); % drop histc trailing overflow bin
     end
 end
 
@@ -235,7 +235,7 @@ switch behavior
         color_limits = [0 1];
     case 'm_orient'
         try; cmap = evalin('base', 'blue_map'); catch; end
-        color_limits = [0 0.8];
+        color_limits = [0 1];
     case 'm_behind'
         try; cmap = evalin('base', 'magenta_map'); catch; end
         color_limits = [0 0.8];
@@ -253,10 +253,10 @@ switch behavior
         color_limits = [0 0.001];        
     case 'm_still'
         try; cmap = evalin('base', 'magenta_map'); catch; end
-        color_limits = [0 0.5];
+        color_limits = [0 0.45];
     case 'f_still'
         try; cmap = evalin('base', 'magenta_map'); catch; end
-        color_limits = [0 0.5];
+        color_limits = [0 0.45];
     case 'aggression'
         try; cmap = evalin('base', 'magenta_map'); catch; end
         color_limits = [0 0.025];  
@@ -268,7 +268,10 @@ switch behavior
         color_limits = [0 0.025];   
     case 'boxing'
         try; cmap = evalin('base', 'magenta_map'); catch; end
-        color_limits = [0 0.025];   
+        color_limits = [0 0.025]; 
+    case 'chase'
+        try; cmap = evalin('base', 'magenta_map'); catch; end
+        color_limits = [0 0.5]; 
 
 end
 
@@ -276,7 +279,17 @@ end
 f = figure('Position', [1000 500 250 700]);
 h = heatmap(f, SS_PSTHs_all ./ FPS);
 h.YDisplayLabels        = labels(driver_inds);
-h.XDisplayLabels        = repmat({''}, 1, n_bins);
+binsize_sec  = binsize / 1000;
+total_sec    = windowLength / FPS;
+tick_times   = 0 : 30 : total_sec;
+xlabels      = repmat({''}, 1, n_bins);
+for t = tick_times
+    bin_idx = round(t / binsize_sec) + 1;
+    if bin_idx >= 1 && bin_idx <= n_bins
+        xlabels{bin_idx} = num2str(t);
+    end
+end
+h.XDisplayLabels        = xlabels;
 h.Colormap              = cmap;
 if ~isempty(color_limits)
     h.ColorLimits       = color_limits;
@@ -287,6 +300,25 @@ h.FontSize              = 9;
 h.GridVisible           = 'off';
 h.Interpreter           = 'none';
 h.Position              = [0.5, 0.15, 0.4, 0.80]; % leave room at bottom for colorbar
+
+% Suppress heatmap's own ticks (categorical ruler can't take numeric XTick)
+drawnow;  % ensure heatmap finishes rendering before modifying axes
+ax = struct(h).Axes;
+ax.Box              = 'off';
+ax.XAxis.TickLength = [0 0];
+ax.YAxis.TickLength = [0 0];
+
+% Overlay a transparent axes to draw downward tick marks at 30-s intervals
+tick_bin_pos = round(tick_times / binsize_sec) + 1;
+valid_mask   = tick_bin_pos >= 1 & tick_bin_pos <= n_bins;
+tax = axes(f, 'Position', ax.Position, ...
+    'Color', 'none', 'Box', 'off', ...
+    'XLim', [0.5, n_bins + 0.5], 'YLim', [0 1], ...
+    'XTick', tick_bin_pos(valid_mask), ...
+    'XTickLabel', repmat({''}, 1, sum(valid_mask)), ...
+    'YTick', [], 'YColor', 'none', 'XColor', 'k', ...
+    'TickDir', 'out', 'TickLength', [0.005 0.005], ...
+    'FontSize', 9);
 
 %% Horizontal colorbar drawn as an imagesc gradient strip below the heatmap
 clim_vals = color_limits;

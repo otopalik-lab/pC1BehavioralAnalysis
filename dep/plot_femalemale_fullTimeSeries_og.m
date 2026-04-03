@@ -147,13 +147,13 @@ beh_len = double(beh_len);
 t_beh   = (0:beh_len-1) ./ FPS;   % time axis starting at 0 s
 
 %% ── LED reference trace (first trial, truncated to beh_len) ─────────────
-LED_raw  = double(FemaleMaleData(trial_inds(1)).LED);
+LED_raw  = double(FemaleMaleData(trial_inds(1)).LEDIntensity);
 LED_vec  = LED_raw(1:min(beh_len, length(LED_raw)));
 % Pad with zeros if LED was shorter than beh_len (edge case)
 if length(LED_vec) < beh_len
     LED_vec(end+1:beh_len) = 0;
 end
-LED_units = FemaleMaleData(trial_inds(1)).LEDunits;
+LED_units = 'mW/cm^2';
 
 % Detect LED epochs from binarised trace
 LED_epochs = detect_binarybouts(LED_vec > 0);
