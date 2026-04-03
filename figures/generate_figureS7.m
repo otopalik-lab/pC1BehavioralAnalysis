@@ -20,8 +20,8 @@ SavePath = '/Users/otopalika/Documents/GitHub/pC1BehavioralAnalysis/results/figu
 
 %% Figures S7A: Example Full Timeseries
 
-plot_femalemale_fullTimeSeries_og(lines{24}, {'m_unilateralwing'},{'Distance', 'FacingAngle', 'AngleBetween'})
-plot_femalemale_fullTimeSeries_og(lines{29}, {'m_unilateralwing','chase'},{'Distance', 'FacingAngle', 'AngleBetween'})
+%plot_femalemale_fullTimeSeries_og(lines{24}, {'m_unilateralwing'},{'Distance', 'FacingAngle', 'AngleBetween'})
+%plot_femalemale_fullTimeSeries_og(lines{29}, {'m_unilateralwing','chase'},{'Distance', 'FacingAngle', 'AngleBetween'})
 
 %% Figure S7B: STAs selected lines 
 
