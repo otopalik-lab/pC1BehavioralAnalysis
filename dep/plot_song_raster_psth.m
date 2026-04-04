@@ -34,6 +34,7 @@ function fig = plot_song_raster_psth(line_input, dataset_type, varargin)
 %   'psth_xlim'       [lo hi]   X-axis range (s) for LED and PSTH panels
 %   'ylim_pulse'      [lo hi]   Pulse PSTH left y-axis limits
 %   'ylim_sine'       [lo hi]   Sine PSTH right y-axis limits
+%   'psth_axis'       logical   Show axes and xlabel('seconds') on PSTH panel (default false)
 %   'SavePath'        char      Directory to save figure (requires SaveFormat)
 %   'SaveFormat'      char      File format, e.g. '.pdf', '.png', '.svg'
 %
@@ -143,6 +144,7 @@ ip.addParameter('raster_xlim',   def_raster_xlim,  @(x) isnumeric(x) && numel(x)
 ip.addParameter('psth_xlim',     def_psth_xlim,    @(x) isnumeric(x) && numel(x)==2);
 ip.addParameter('ylim_pulse',    def_ylim_pulse,   @(x) isnumeric(x) && numel(x)==2);
 ip.addParameter('ylim_sine',     def_ylim_sine,    @(x) isnumeric(x) && numel(x)==2);
+ip.addParameter('psth_axis',     false,            @islogical);
 ip.addParameter('SavePath',      '',               @ischar);
 ip.addParameter('SaveFormat',    '',               @ischar);
 ip.parse(varargin{:});
@@ -310,7 +312,12 @@ area(edges(1:end-1) ./ 1000, SineRate(1:end-1), ...
 ylim(opts.ylim_sine);
 box off;
 xlim(opts.psth_xlim);
-axis off;
+if opts.psth_axis
+    axis on;
+    xlabel('seconds');
+else
+    axis off;
+end
 
 %% ── Save (optional) ──────────────────────────────────────────────────────
 if ~isempty(opts.SavePath) && ~isempty(opts.SaveFormat)
