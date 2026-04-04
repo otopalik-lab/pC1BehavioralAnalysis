@@ -38,31 +38,19 @@ plot([1:length(data_isolatedmale_activation(1).LED)]./data_isolatedmale_activati
 ylabel('629nm LED (mW/cm^2)'); box off; xlabel('seconds')
 
 %% Fig 5C: LED Stimulus-Aligned Sine and Pulse event raster plots, and PSTHs for selected pC1 SS line:
-
-%plot_song_raster_psth('Empty Split', 'isolated_activation');
-%plot_song_raster_psth('SS03661', 'isolated_activation');
+% For SS106638, expressing in pC1_13a, 14ab:
 plot_song_raster_psth('SS106638', 'isolated_activation')
-%plot_song_raster_psth('SS46542', 'isolated_activation');
-%plot_song_raster_psth('SS43275', 'isolated_activation');
-
-plot_song_raster_psth('Empty Split', 'courting_activation');
-%plot_song_raster_psth('SS03661', 'courting_activation');
 plot_song_raster_psth('SS106638', 'courting_activation');
-%plot_song_raster_psth('SS46542', 'courting_activation');
-%plot_song_raster_psth('SS43275', 'courting_activation');
-
-plot_song_raster_psth('Empty Split', 'courting_silencing');
-%plot_song_raster_psth('SS03661', 'courting_silencing');
 plot_song_raster_psth('SS106638', 'courting_silencing');
-%plot_song_raster_psth('SS46542', 'courting_silencing');
-%plot_song_raster_psth('SS43275', 'courting_silencing');
+
 
 %% Fig 5D: Heatmaps for Transient Responses (1-second window) at Stimulus Onset across LED Powers
 
-plot_songbypower_heatmaps('all','courting_activation', 'transient');
-plot_songbypower_heatmaps('all','courting_silencing', 'transient');
-plot_songbypower_heatmaps('all','isolated_activation', 'transient');
-plot_songbypower_heatmaps('all','isolated_activation', 'post');
+
+plot_songbypower_heatmaps_cols('all','courting_activation', 'transient');
+plot_songbypower_heatmaps_cols('all','courting_silencing', 'transient');
+plot_songbypower_heatmaps_cols('all','isolated_activation', 'transient');
+plot_songbypower_heatmaps_cols('all','isolated_activation', 'post');
 
 
 
