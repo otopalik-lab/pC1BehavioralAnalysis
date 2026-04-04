@@ -59,25 +59,10 @@ plot_song_raster_psth('SS106638', 'courting_silencing');
 
 %% Fig 5D: Heatmaps for Transient Responses (1-second window) at Stimulus Onset across LED Powers
 
-
-
-
-
-
-
-
-
-
-
-
-%% Fig 5 Supplement #1: PSTH plots for all SS lines
-
-plot_song_psth_alllines('all', 'isolated_activation')
-plot_song_psth_alllines('all', 'courting_activation')
-plot_song_psth_alllines('all', 'courting_silencing')
-
-%% Fig 5D or Supp: "Classic" Heatmaps pulse rate and sine rate as a function of LED intensity:
-
+plot_songbypower_heatmaps('all','courting_activation', 'transient');
+plot_songbypower_heatmaps('all','courting_silencing', 'transient');
+plot_songbypower_heatmaps('all','isolated_activation', 'transient');
+plot_songbypower_heatmaps('all','isolated_activation', 'post');
 
 
 
