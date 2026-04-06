@@ -1,23 +1,40 @@
-function fig_heatmap = plot_song_heatmap_byperiod( ...
+function [fig_heatmap, tbl] = plot_song_heatmap_byperiod( ...
     line_input, dataset_type, varargin)
 %PLOT_SONG_HEATMAP_BYPERIOD  Heatmap of evoked song pooled across the top N
 %   LED powers, with one column per stimulus period (Transient | LED | Post).
 %
-%   Rows = SS lines, cols = [Transient | LED | Post].
-%   Each cell shows song averaged across all trials AND the top N LED powers,
-%   mirroring the multi-bout pooling used in plot_song_raster_psth.
+%   Rows = SS lines, cols = [Transient | LED | Post] (or a single period).
+%   Each cell shows song averaged across ALL trials and the top n_top LED
+%   powers (highest intensities).  No copulation-trial filter is applied
+%   (cf. plot_songbypower_heatmap_cols, which restricts to copulation trials).
 %
 %   For ISOLATED males    : pulse/min (per 5-s window) and sine % time
 %                           (raw values, not baseline-subtracted).
-%   For COURTING males    : z-scores relative to the empty-split control,
-%                           computed per trial as (ΔLED − ctrl_mean) / ctrl_std.
-%                           Applies to both activation and silencing datasets.
+%                           LED columns: all available intensities; top n_top
+%                           (default 2) are pooled.
+%
+%   For COURTING ACTIVATION : z-scores relative to the empty-split control
+%                           (data index 1), computed per trial as
+%                           z = (mean_Δ_top − ctrl_mean) / ctrl_std,
+%                           where mean_Δ_top = mean across top n_top LED
+%                           intensities of (song_stim − song_pre).
+%                           LED columns: all available intensities (typically
+%                           5 non-zero powers); top n_top are pooled.
+%
+%   For COURTING SILENCING  : same z-score formula as activation.
+%                           LED columns: all available intensities (typically
+%                           6 non-zero powers); top n_top are pooled.
+%                           NOTE: unlike plot_songbypower_heatmap_cols, the
+%                           lowest LED power is NOT dropped before pooling —
+%                           because pooling the top n_top already excludes it.
+%                           SS101146 and SS101156 have no data for this
+%                           condition; their cells are left blank (NaN).
 %
 % ── USAGE ─────────────────────────────────────────────────────────────────
-%   fh = plot_song_heatmap_byperiod('all', 'isolated_activation')
-%   fh = plot_song_heatmap_byperiod([1 3 5], 'courting_activation', 'n_top', 2)
-%   fh = plot_song_heatmap_byperiod('all', 'isolated_activation', ...
-%                                   'clim_pulse', [0 80], 'alpha', 0.01)
+%   [fh, tbl] = plot_song_heatmap_byperiod('all', 'isolated_activation')
+%   [fh, tbl] = plot_song_heatmap_byperiod([1 3 5], 'courting_activation', 'n_top', 2)
+%   [fh, tbl] = plot_song_heatmap_byperiod('all', 'courting_silencing', ...
+%                                           'period', 'led', 'alpha', 0.01)
 %
 % ── REQUIRED INPUTS ───────────────────────────────────────────────────────
 %   line_input    'all' | char | cell | numeric   Lines to include
@@ -28,7 +45,9 @@ function fig_heatmap = plot_song_heatmap_byperiod( ...
 %   dataset_type  'isolated_activation' | 'courting_activation' | 'courting_silencing'
 %
 % ── OPTIONAL NAME-VALUE INPUTS ────────────────────────────────────────────
-%   'n_top'       int     Number of highest LED powers to pool (default 3)
+%   'period'      char    Stimulus period to display and tabulate:
+%                           'all' (default) | 'transient' | 'led' | 'post'
+%   'n_top'       int     Number of highest LED powers to pool (default 2)
 %   'clim_pulse'  [lo hi] Pulse color limits (default [0 100] / [-6 6])
 %   'clim_sine'   [lo hi] Sine color limits  (default [] auto / [-6 6])
 %   'alpha'       scalar  Significance threshold (default 0.05)
@@ -42,6 +61,7 @@ function fig_heatmap = plot_song_heatmap_byperiod( ...
 %   lines       1×N cell array of SS line name strings
 %   celltypes   1×N cell array of cell-type name strings
 %
+%
 % ── STATS ─────────────────────────────────────────────────────────────────
 %   Isolated : one-way ANOVA + Dunnett's test per line across
 %              [PRE, Transient, LED, Post] (control group = PRE).
@@ -51,9 +71,13 @@ function fig_heatmap = plot_song_heatmap_byperiod( ...
 %
 % ── OUTPUTS ───────────────────────────────────────────────────────────────
 %   fig_heatmap   Figure handle
+%   tbl           Table with one row per line: LineName, CellType, and for
+%                 each displayed period: Pulse_[Period], Pulse_pval_[Period],
+%                 Sine_[Period], Sine_pval_[Period].
 
 %% ── Parse optional arguments ─────────────────────────────────────────────
 ip = inputParser;
+ip.addParameter('period',     'all', @(x) ischar(x) && ismember(lower(x), {'all','transient','led','post'}));
 ip.addParameter('n_top',      2,    @(x) isnumeric(x) && isscalar(x));
 ip.addParameter('clim_pulse', [],   @(x) isnumeric(x) && numel(x)==2);
 ip.addParameter('clim_sine',  [],   @(x) isnumeric(x) && numel(x)==2);
@@ -61,7 +85,8 @@ ip.addParameter('alpha',      0.05, @(x) isnumeric(x) && isscalar(x));
 ip.addParameter('SavePath',   '',   @ischar);
 ip.addParameter('SaveFormat', '',   @ischar);
 ip.parse(varargin{:});
-opts = ip.Results;
+opts        = ip.Results;
+opts.period = lower(opts.period);
 
 %% ── Validate required inputs ─────────────────────────────────────────────
 dataset_type = lower(dataset_type);
@@ -145,6 +170,29 @@ switch dataset_type
         label_sine  = 'Sine Z-Score';
 end
 
+% SS101146 and SS101156 have no data in courting_silencing — set their
+% heatmap cells to NaN so they appear white (missing data colour).
+if strcmp(dataset_type, 'courting_silencing')
+    no_data_lines = {'SS101146', 'SS101156'};
+    for nd = 1:numel(no_data_lines)
+        nd_row = find(contains(row_labels, no_data_lines{nd}), 1);
+        if ~isempty(nd_row)
+            pulse_plot(nd_row, :) = NaN;
+            sine_plot(nd_row, :)  = NaN;
+        end
+    end
+end
+
+%% ── Apply period filter ──────────────────────────────────────────────────
+period_map = struct('transient', 1, 'led', 2, 'post', 3);
+if ~strcmp(opts.period, 'all')
+    pcol       = period_map.(opts.period);
+    pulse_plot = pulse_plot(:, pcol);
+    sine_plot  = sine_plot(:,  pcol);
+    x_labels   = x_labels(pcol);
+    n_periods  = 1;
+end
+
 clim_p = opts.clim_pulse; if isempty(clim_p), clim_p = clim_p_def; end
 clim_s = opts.clim_sine;  if isempty(clim_s), clim_s = clim_s_def; end
 
@@ -171,8 +219,9 @@ hp.YLabel          = 'SS Line';
 hp.XLabel          = 'Stimulus Period';
 hp.Colormap        = cmap;
 if ~isempty(clim_p), hp.ColorLimits = clim_p; end
-hp.ColorbarVisible = 'off';
-hp.Title           = label_pulse;
+hp.ColorbarVisible  = 'off';
+hp.MissingDataColor = [1 1 1];   % white for lines with no data
+hp.Title            = label_pulse;
 
 % Sine
 nexttile;
@@ -183,8 +232,9 @@ hs.XDisplayLabels  = x_labels;
 hs.XLabel          = 'Stimulus Period';
 hs.Colormap        = cmap;
 if ~isempty(clim_s), hs.ColorLimits = clim_s; end
-hs.ColorbarVisible = 'off';
-hs.Title           = label_sine;
+hs.ColorbarVisible  = 'off';
+hs.MissingDataColor = [1 1 1];   % white for lines with no data
+hs.Title            = label_sine;
 
 %% ── Statistics + heatmap annotation ─────────────────────────────────────
 % Empty split is the reference for all comparisons — identify it first so
@@ -194,6 +244,44 @@ es_row = find(contains(row_labels, 'Empty'));
 stats_byline = compute_stats_pooled(data, line_idx, opts.n_top, ...
     dataset_type, opts.alpha, es_row);
 
+% SS101146 and SS101156 have no data in courting_silencing — clear their
+% stats entries so no significance dots are drawn.
+if strcmp(dataset_type, 'courting_silencing')
+    no_data_lines = {'SS101146', 'SS101156'};
+    for nd = 1:numel(no_data_lines)
+        nd_row = find(contains(row_labels, no_data_lines{nd}), 1);
+        if ~isempty(nd_row)
+            stats_byline(nd_row).pulse = [];
+            stats_byline(nd_row).sine  = [];
+        end
+    end
+end
+
+%% ── Build output table ───────────────────────────────────────────────────
+% pulse_plot / sine_plot are already filtered to the requested period(s).
+% x_labels matches their columns.  tbl_stat_cols maps each display column
+% back to the 1-3 index used in stats_byline.pulse_pval / .sine_pval.
+if strcmp(opts.period, 'all')
+    tbl_stat_cols = 1:3;
+else
+    tbl_stat_cols = period_map.(opts.period);   % scalar
+end
+
+line_names = cellfun(@(s) strtrim(s(1:strfind(s,' | ')-1)), row_labels, 'UniformOutput', false);
+cell_names = cellfun(@(s) strtrim(s(strfind(s,' | ')+3:end)), row_labels, 'UniformOutput', false);
+
+tbl = table(line_names(:), cell_names(:), 'VariableNames', {'LineName', 'CellType'});
+for pc = 1:numel(tbl_stat_cols)
+    sc  = tbl_stat_cols(pc);   % stats_byline index (1=Trans, 2=LED, 3=Post)
+    pn  = x_labels{pc};
+    pp  = arrayfun(@(k) stats_byline(k).pulse_pval(sc), (1:n_lines)');
+    sp  = arrayfun(@(k) stats_byline(k).sine_pval(sc),  (1:n_lines)');
+    tbl.(['Pulse_'      pn]) = pulse_plot(:, pc);
+    tbl.(['Pulse_pval_' pn]) = pp;
+    tbl.(['Sine_'       pn]) = sine_plot(:,  pc);
+    tbl.(['Sine_pval_'  pn]) = sp;
+end
+
 % For both isolated and courting, stat column indices 1-3 map directly to
 % heatmap columns 1-3 [Transient, LED, Post] — no col_offset needed.
 annot_color = [0 0 0];   % black
@@ -202,17 +290,32 @@ ax_s = struct(hs).Axes;
 hold(ax_p, 'on');
 hold(ax_s, 'on');
 
+% When a single period is displayed, remap stat column indices to display
+% column 1 and suppress dots for other periods.
+if strcmp(opts.period, 'all')
+    disp_cols = 1:3;   % stats col → display col (identity)
+else
+    disp_cols = nan(1, 3);
+    disp_cols(period_map.(opts.period)) = 1;
+end
+
 for k = 1:n_lines
     if any(k == es_row), continue; end
     sig_p_cols = stats_byline(k).pulse;
     sig_s_cols = stats_byline(k).sine;
     if ~isempty(sig_p_cols)
-        scatter(ax_p, sig_p_cols, k * ones(size(sig_p_cols)), 15, 'filled', ...
-                'MarkerFaceColor', annot_color);
+        dc = disp_cols(sig_p_cols);  dc = dc(~isnan(dc));
+        if ~isempty(dc)
+            scatter(ax_p, dc, k * ones(size(dc)), 15, 'filled', ...
+                    'MarkerFaceColor', annot_color);
+        end
     end
     if ~isempty(sig_s_cols)
-        scatter(ax_s, sig_s_cols, k * ones(size(sig_s_cols)), 15, 'filled', ...
-                'MarkerFaceColor', annot_color);
+        dc = disp_cols(sig_s_cols);  dc = dc(~isnan(dc));
+        if ~isempty(dc)
+            scatter(ax_s, dc, k * ones(size(dc)), 15, 'filled', ...
+                    'MarkerFaceColor', annot_color);
+        end
     end
 end
 
@@ -386,7 +489,8 @@ function stats_byline = compute_stats_pooled(data, line_idx, n_top, ...
 %              empty split (es_idx) as the control group.
 
 n_lines      = length(line_idx);
-stats_byline = repmat(struct('pulse', [], 'sine', []), n_lines, 1);
+stats_byline = repmat(struct('pulse', [], 'pulse_pval', nan(1,3), ...
+                              'sine',  [], 'sine_pval',  nan(1,3)), n_lines, 1);
 periods      = {'TRANSIENT', 'LED', 'POST'};
 n_per        = numel(periods);
 
@@ -419,13 +523,15 @@ switch dataset_type
             res = multcompare(st, 'CriticalValueType', 'dunnett', ...
                 'Approximate', true, 'ControlGroup', 1, ...
                 'Alpha', alpha, 'Display', 'off');
-            stats_byline(k).pulse = find(res(:,6) < alpha);   % 1=Trans,2=LED,3=Post
+            stats_byline(k).pulse      = find(res(:,6) < alpha);   % 1=Trans,2=LED,3=Post
+            stats_byline(k).pulse_pval = res(:,6)';
 
             [~,~,st] = anova1(s_all, grp, 'off');
             res = multcompare(st, 'CriticalValueType', 'dunnett', ...
                 'Approximate', true, 'ControlGroup', 1, ...
                 'Alpha', alpha, 'Display', 'off');
-            stats_byline(k).sine = find(res(:,6) < alpha);
+            stats_byline(k).sine      = find(res(:,6) < alpha);
+            stats_byline(k).sine_pval = res(:,6)';
         end
 
     case {'courting_activation', 'courting_silencing'}
@@ -451,9 +557,12 @@ switch dataset_type
                 'Approximate', true, 'ControlGroup', es_idx, ...
                 'Alpha', alpha, 'Display', 'off');
             for r = 1:size(res, 1)
-                if res(r,6) < alpha
-                    k = res(r, 1:2);  k = k(k ~= es_idx);
-                    if ~isempty(k), stats_byline(k).pulse(end+1) = col; end %#ok<AGROW>
+                k = res(r, 1:2);  k = k(k ~= es_idx);
+                if ~isempty(k)
+                    stats_byline(k).pulse_pval(col) = res(r,6);       %#ok<AGROW>
+                    if res(r,6) < alpha
+                        stats_byline(k).pulse(end+1) = col;            %#ok<AGROW>
+                    end
                 end
             end
 
@@ -462,9 +571,12 @@ switch dataset_type
                 'Approximate', true, 'ControlGroup', es_idx, ...
                 'Alpha', alpha, 'Display', 'off');
             for r = 1:size(res, 1)
-                if res(r,6) < alpha
-                    k = res(r, 1:2);  k = k(k ~= es_idx);
-                    if ~isempty(k), stats_byline(k).sine(end+1) = col; end  %#ok<AGROW>
+                k = res(r, 1:2);  k = k(k ~= es_idx);
+                if ~isempty(k)
+                    stats_byline(k).sine_pval(col) = res(r,6);        %#ok<AGROW>
+                    if res(r,6) < alpha
+                        stats_byline(k).sine(end+1) = col;             %#ok<AGROW>
+                    end
                 end
             end
         end
