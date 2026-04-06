@@ -38,38 +38,31 @@ plot([1:length(data_isolatedmale_activation(1).LED)]./data_isolatedmale_activati
 ylabel('629nm LED (mW/cm^2)'); box off; xlabel('seconds')
 
 %% Fig 5C: LED Stimulus-Aligned Sine and Pulse event raster plots, and PSTHs for selected pC1 SS line:
-
-%plot_song_raster_psth('Empty Split', 'isolated_activation');
-%plot_song_raster_psth('SS03661', 'isolated_activation');
+% For SS106638, expressing in pC1_13a, 14ab:
 plot_song_raster_psth('SS106638', 'isolated_activation')
-%plot_song_raster_psth('SS46542', 'isolated_activation');
-%plot_song_raster_psth('SS43275', 'isolated_activation');
-
-plot_song_raster_psth('Empty Split', 'courting_activation');
-%plot_song_raster_psth('SS03661', 'courting_activation');
 plot_song_raster_psth('SS106638', 'courting_activation');
-%plot_song_raster_psth('SS46542', 'courting_activation');
-%plot_song_raster_psth('SS43275', 'courting_activation');
-
-plot_song_raster_psth('Empty Split', 'courting_silencing');
-%plot_song_raster_psth('SS03661', 'courting_silencing');
 plot_song_raster_psth('SS106638', 'courting_silencing');
-%plot_song_raster_psth('SS46542', 'courting_silencing');
-%plot_song_raster_psth('SS43275', 'courting_silencing');
+
 
 %% Fig 5D: Heatmaps for Transient Responses (1-second window) at Stimulus Onset across LED Powers
 
-plot_songbypower_heatmaps('all','courting_activation', 'transient');
-plot_songbypower_heatmaps('all','courting_silencing', 'transient');
-plot_songbypower_heatmaps('all','isolated_activation', 'transient');
-plot_songbypower_heatmaps('all','isolated_activation', 'post');
+
+plot_songbypower_heatmaps_cols('all','courting_activation', 'transient');
+plot_songbypower_heatmaps_cols('all','courting_silencing', 'transient');
+plot_songbypower_heatmaps_cols('all','isolated_activation', 'transient');
+plot_songbypower_heatmaps_cols('all','isolated_activation', 'post');
 
 
 
-%% Fig 5E: Heatmaps for transient, LED, and post-stimulus periods for selected pC1 SS line, combined 3 highest LED powers:
+%% Extra: Heatmap and table for transient response period for selected pC1 SS line, combined 3 highest LED powers:
 % useful for connectomic analysis?
 
-plot_song_heatmap_byperiod('all', 'isolated_activation')
-plot_song_heatmap_byperiod('all', 'courting_activation')
-plot_song_heatmap_byperiod('all', 'courting_silencing')
+% Get Z scores (relative to Empty Split Control) for highest LED power
+% during early response period ("transient") and accompanying p values, to
+% use for connectomic inquiries relating song output to circuit
+% connectivity. This includes data for the 2 highest LED powers (3 and 4
+% mW/cm^2)
 
+%this table is saved as 'CourtingMaleActivation_Zscores_Pvalues.csv' in the data folder
+
+[fig, tbl] = plot_song_heatmap_byperiod('all', 'courting_activation','period','transient'); 

@@ -105,7 +105,7 @@ end
 
 %% ── Parse optional arguments ─────────────────────────────────────────────
 ip = inputParser;
-ip.addParameter('max_per_fig',   6,                 @(x) isnumeric(x) && isscalar(x));
+ip.addParameter('max_per_fig',   12,                 @(x) isnumeric(x) && isscalar(x));
 ip.addParameter('plotbouts',     def_plotbouts,     @isnumeric);
 ip.addParameter('select_trials', def_select_trials, @isnumeric);
 ip.addParameter('led_ref_bout',  def_led_ref,       @(x) isnumeric(x) && isscalar(x));

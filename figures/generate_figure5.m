@@ -54,10 +54,15 @@ plot_songbypower_heatmaps_cols('all','isolated_activation', 'post');
 
 
 
-%% Fig 5E: Heatmaps for transient, LED, and post-stimulus periods for selected pC1 SS line, combined 3 highest LED powers:
+%% Extra: Heatmap and table for transient response period for selected pC1 SS line, combined 3 highest LED powers:
 % useful for connectomic analysis?
 
-plot_song_heatmap_byperiod('all', 'isolated_activation')
-plot_song_heatmap_byperiod('all', 'courting_activation')
-plot_song_heatmap_byperiod('all', 'courting_silencing')
+% Get Z scores (relative to Empty Split Control) for highest LED power
+% during early response period ("transient") and accompanying p values, to
+% use for connectomic inquiries relating song output to circuit
+% connectivity. This includes data for the 2 highest LED powers (3 and 4
+% mW/cm^2)
 
+%this table is saved as 'CourtingMaleActivation_Zscores_Pvalues.csv' in the data folder
+
+[fig, tbl] = plot_song_heatmap_byperiod('all', 'courting_activation','period','transient'); 
