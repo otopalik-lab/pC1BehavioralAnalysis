@@ -12,7 +12,7 @@ celltypes = {selectedLines.Var2}; celltypes = celltypes([1:36]);
 %% Load Data and Metadata to for Base Workspace:
 addpath(genpath('/Users/otopalika/Documents/GitHub/pC1BehavioralAnalysis'));
 % Load Song Data for all Experiment types:
-load('SongRecordingData_BaseWorkspace_v3.mat')
+load('SongRecordingData_BaseWorkspace.mat')
 
 %% Settings for Saving Plots:
 
@@ -47,10 +47,10 @@ plot_song_raster_psth('SS106638', 'courting_silencing');
 %% Fig 5D: Heatmaps for Transient Responses (1-second window) at Stimulus Onset across LED Powers
 
 
-plot_songbypower_heatmaps_cols('all','courting_activation', 'transient');
-plot_songbypower_heatmaps_cols('all','courting_silencing', 'transient');
-plot_songbypower_heatmaps_cols('all','isolated_activation', 'transient');
-plot_songbypower_heatmaps_cols('all','isolated_activation', 'post');
+plot_songbypower_heatmaps('all','courting_activation', 'transient');
+plot_songbypower_heatmaps('all','courting_silencing', 'transient');
+plot_songbypower_heatmaps('all','isolated_activation', 'transient');
+plot_songbypower_heatmaps('all','isolated_activation', 'post');
 
 
 

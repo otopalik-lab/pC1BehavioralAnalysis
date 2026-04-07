@@ -30,16 +30,16 @@ plot_malemalebehavior_PSTH_heatmap('all','wingflick',binsize)
 
 %% Figure 56B: 2-bin (30-sec each) Heatmaps of behavioral probabilities with p-value annotations all pC1 SS Lines for all behavioral classes:
 
-plot_malemalebehavior_2bin_heatmap('all','close', binsize) %'proximal is equivalent to 'close' in the paper
-plot_malemalebehavior_2bin_heatmap('all','still', binsize)  
-plot_malemalebehavior_2bin_heatmap('all','chase',binsize)  
-plot_malemalebehavior_2bin_heatmap('all','approach',binsize)  
-plot_malemalebehavior_2bin_heatmap('all','orient',binsize)  
-plot_malemalebehavior_2bin_heatmap('all','unilateralwing',binsize)  
-plot_malemalebehavior_2bin_heatmap('all','tussle',binsize)  
-plot_malemalebehavior_2bin_heatmap('all','boxing',binsize)  
-plot_malemalebehavior_2bin_heatmap('all','headbutt',binsize)  
-plot_malemalebehavior_2bin_heatmap('all','wingflick',binsize)  
+plot_malemalebehavior_stimbin_heatmap('all','close', binsize) %'proximal is equivalent to 'close' in the paper
+plot_malemalebehavior_stimbin_heatmap('all','still', binsize)  
+plot_malemalebehavior_stimbin_heatmap('all','chase',binsize)  
+plot_malemalebehavior_stimbin_heatmap('all','approach',binsize)  
+plot_malemalebehavior_stimbin_heatmap('all','orient',binsize)  
+plot_malemalebehavior_stimbin_heatmap('all','unilateralwing',binsize)  
+plot_malemalebehavior_stimbin_heatmap('all','tussle',binsize)  
+plot_malemalebehavior_stimbin_heatmap('all','boxing',binsize)  
+plot_malemalebehavior_stimbin_heatmap('all','headbutt',binsize)  
+plot_malemalebehavior_stimbin_heatmap('all','wingflick',binsize)  
 
 %% Figure 56C-D: Sankey Diagrams for LED Stimulation and Post-Stimulation Periods, all behavioral classes:
 

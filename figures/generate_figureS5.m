@@ -1,12 +1,12 @@
 %% Load Data and Metadata to for Base Workspace:
 addpath(genpath('/Users/otopalika/Documents/GitHub/pC1BehavioralAnalysis'));
 % Load Song Data for all Experiment types:
-load('SongRecordingData_BaseWorkspace_v3.mat')
+load('SongRecordingData_BaseWorkspace.mat')
 
 %% Settings for Saving Plots:
 
 SaveFormat = '.png'; %can change this as desired (see 'save' function in MATLAB for available formats'
-SavePath = '/Users/otopalika/Documents/GitHub/pC1BehavioralAnalysis/results/figure5'; % can change as desired
+SavePath = '/Users/otopalika/Documents/GitHub/pC1BehavioralAnalysis/results/figureS5'; % can change as desired
 
 %% Fig 5 Supplement #1: PSTH plots for all SS lines
 

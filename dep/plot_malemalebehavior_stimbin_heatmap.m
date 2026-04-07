@@ -1,5 +1,5 @@
-function plot_behavior_2bin_heatmap(line_input, behavior, SavePath, SaveFormat)
-% PLOT_BEHAVIOR_2BIN_HEATMAP  Plot a 2-bin (LED on / LED off, 30 s each) PSTH
+function plot_behavior_stimbin_heatmap(line_input, behavior, SavePath, SaveFormat)
+% PLOT_BEHAVIOR_STIMBIN_HEATMAP  Plot a 2-bin (LED on / LED off, 30 s each) PSTH
 %                    heatmap for the specified behavior across SS lines,
 %                    with magenta scatter annotations marking lines
 %                    significantly different from the Empty Split control

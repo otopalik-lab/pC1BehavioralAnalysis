@@ -1,5 +1,5 @@
-function plot_femalemalebehavior_2bin_heatmap(line_input, behavior, varargin)
-%PLOT_FEMALEMALEBEHAVIOR_2BIN_HEATMAP  2-bin heatmap of p(behavior) across
+function plot_femalemalebehavior_stimbin_heatmap(line_input, behavior, varargin)
+%PLOT_FEMALEMALEBEHAVIOR_STIMBIN_HEATMAP  2-bin heatmap of p(behavior) across
 %   driver lines in FemaleMaleData. The two bins are:
 %     Bin 1 ('pre')  — 2 minutes immediately prior to LED onset
 %     Bin 2 ('stim') — 2 minutes during LED stimulation

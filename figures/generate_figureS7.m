@@ -25,9 +25,9 @@ SavePath = '/Users/otopalika/Documents/GitHub/pC1BehavioralAnalysis/results/figu
 
 %% Figure S7B: STAs selected lines 
 
-plot_femalemale_STA_og(lines{1}, {'m_unilateralwing'},{'Distance', 'FacingAngle', 'AngleBetween'})
-plot_femalemale_STA_og(lines{2}, {'m_unilateralwing'},{'Distance', 'FacingAngle', 'AngleBetween'})
-plot_femalemale_STA_og(lines{20}, {'m_unilateralwing'},{'Distance', 'FacingAngle', 'AngleBetween'})
+plot_femalemale_STA(lines{1}, {'m_unilateralwing'},{'Distance', 'FacingAngle', 'AngleBetween'})
+plot_femalemale_STA(lines{2}, {'m_unilateralwing'},{'Distance', 'FacingAngle', 'AngleBetween'})
+plot_femalemale_STA(lines{20}, {'m_unilateralwing'},{'Distance', 'FacingAngle', 'AngleBetween'})
 
 
 %% Figure S7C: Heatmaps of behavioral probabilities over time across all pC1 SS Lines for all behavioral classes:
@@ -45,12 +45,12 @@ plot_femalemale_PSTH_heatmap('all','f_still',binsize)
 
 
 %% Figure S7D: Single-Bin Heatmaps for stim period only
-plot_femalemalebehavior_2bin_heatmap('all','close','stim','zscore')
-plot_femalemalebehavior_2bin_heatmap('all','m_behind','stim','zscore')
-plot_femalemalebehavior_2bin_heatmap('all','m_orient','stim','zscore')
-plot_femalemalebehavior_2bin_heatmap('all','m_unilateralwing','stim','zscore')
-plot_femalemalebehavior_2bin_heatmap('all','chase','stim','zscore')
-plot_femalemalebehavior_2bin_heatmap('all','m_approach','stim','zscore')
+plot_femalemalebehavior_stimbin_heatmap('all','close','stim','zscore')
+plot_femalemalebehavior_stimbin_heatmap('all','m_behind','stim','zscore')
+plot_femalemalebehavior_stimbin_heatmap('all','m_orient','stim','zscore')
+plot_femalemalebehavior_stimbin_heatmap('all','m_unilateralwing','stim','zscore')
+plot_femalemalebehavior_stimbin_heatmap('all','chase','stim','zscore')
+plot_femalemalebehavior_stimbin_heatmap('all','m_approach','stim','zscore')
 
 
 %% Extra: Boxplots of behavioral probabilities during LED period only:
