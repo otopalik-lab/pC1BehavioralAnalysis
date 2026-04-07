@@ -1,4 +1,4 @@
-This repository contains code for the processing and analysis of behavioral data collected for Rubin et al., 2025.
+This repository contains code for the processing and analysis of behavioral data collected for [Rubin et al., 2025](https://www.biorxiv.org/content/10.1101/2025.10.21.683766v1).
 
 ## Getting Started
 
