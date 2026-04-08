@@ -47,7 +47,7 @@ plot_song_raster_psth('SS106638', 'courting_silencing');
 %% Fig 5D: Heatmaps for Transient Responses (1-second window) at Stimulus Onset across LED Powers
 
 
-plot_songbypower_heatmaps('all','transient');
+plot_songbypower_heatmap('all','courting_activation','transient');
 plot_songbypower_heatmap('all','courting_silencing','transient');
 plot_songbypower_heatmap('all','isolated_activation', 'transient');
 plot_songbypower_heatmap('all','isolated_activation', 'post');
