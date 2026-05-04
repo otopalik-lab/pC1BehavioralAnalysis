@@ -47,8 +47,8 @@ plot_song_raster_psth('SS106638', 'courting_silencing');
 %% Fig 5D: Heatmaps for Transient Responses (1-second window) at Stimulus Onset across LED Powers
 
 
-plot_songbypower_heatmap('all','courting_activation','transient');
-plot_songbypower_heatmap('all','courting_silencing','transient');
+[pulse_activate, sine_activate] = plot_songbypower_heatmap('all','courting_activation','transient');
+[pulse_silence, sine_silence] = plot_songbypower_heatmap('all','courting_silencing','transient');
 plot_songbypower_heatmap('all','isolated_activation', 'transient');
 plot_songbypower_heatmap('all','isolated_activation', 'post');
 
@@ -65,4 +65,5 @@ plot_songbypower_heatmap('all','isolated_activation', 'post');
 
 %this table is saved as 'CourtingMaleActivation_Zscores_Pvalues.csv' in the data folder
 
-[fig, tbl] = plot_song_heatmap_byperiod('all', 'courting_activation','period','transient'); 
+[fig, tbl] = plot_song_heatmap_byperiod('all', 'courting_activation','period','transient');
+[fig_silence, tbl_silence] = plot_song_heatmap_byperiod('all', 'courting_silencing','period','transient');

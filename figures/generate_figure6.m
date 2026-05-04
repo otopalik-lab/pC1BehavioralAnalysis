@@ -14,6 +14,7 @@ SavePath = '/Users/otopalika/Documents/GitHub/pC1BehavioralAnalysis/results/figu
 %% Fig 6A: Example of LED stimulus-aligned rasters of unilateral wing events, aggression events, and interfly distance for one example chamber:
 
 plot_malemalebehavior_fullTimeseries('SS102671',{'unilateralwing', 'aggression'})
+plot_malemalebehavior_fullTimeseries(lines(2), {'unilateralwing', 'aggression'})
 
 %% Figure 6B: Plot LED stimulus-aligned rasters, PSTHs, and Inter-fly Distances for Selected Lines
 
