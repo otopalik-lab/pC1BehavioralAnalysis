@@ -49,10 +49,72 @@ plot_song_raster_psth('SS106638', 'courting_silencing');
 
 [pulse_activate, sine_activate] = plot_songbypower_heatmap('all','courting_activation','transient');
 [pulse_silence, sine_silence] = plot_songbypower_heatmap('all','courting_silencing','transient');
-plot_songbypower_heatmap('all','isolated_activation', 'transient');
-plot_songbypower_heatmap('all','isolated_activation', 'post');
+[pulse_activate_iso_transient, sine_activate_iso_transient] = plot_songbypower_heatmap('all','isolated_activation', 'transient');
+[pulse_activate_iso_post, sine_activate_iso_post] = plot_songbypower_heatmap('all','isolated_activation', 'post');
 
 
+%% Fig 5?: Hierarchical Clustering of SS Lines by Z-score Profile
+
+% Concatenate z-score matrices: rows = SS lines, cols = all features
+% [pulse_activate | sine_activate | pulse_silence | sine_silence]
+z_all = [pulse_activate, sine_activate, pulse_silence, sine_silence];
+
+% Replace NaNs with 0 (lines with missing data at a power contribute nothing)
+z_all(isnan(z_all)) = 0;
+
+% Pairwise correlation distances between lines
+D = pdist(z_all, 'correlation');
+
+% Ward linkage
+Z_link = linkage(D, 'ward');
+
+% Dendrogram — capture leaf order for sorting the heatmap
+figure;
+lines_reordered = lines([1 36 2:35]);
+[~, ~, leaf_order] = dendrogram(Z_link, 0, 'Labels', lines_reordered(1:size(z_all,1)), 'Orientation', 'left');
+set(gca, 'YDir', 'reverse');
+title('Hierarchical Clustering of SS Lines by Song Z-score Profile');
+xlabel('Ward Linkage Distance');
+
+%Colormap
+n = 256;
+cmap = [linspace(0,1,n/2)', linspace(0,1,n/2)', ones(n/2,1); ...
+        ones(n/2,1), linspace(1,0,n/2)', linspace(1,0,n/2)'];
+colormap(cmap);
+
+
+% Heatmap of concatenated z-scores, rows sorted by dendrogram leaf order
+figure;
+imagesc(z_all(leaf_order, :));
+clim_val = max(abs(z_all(:)));
+caxis([-clim_val, clim_val]);   % use caxis for MATLAB < R2022a compatibility
+colorbar;
+yticks(1:size(z_all,1));
+yticklabels(lines_reordered(leaf_order));
+colormap(cmap);
+xlabel('Feature (power × song type × condition)');
+title('SS Lines Sorted by Hierarchical Clustering');
+clim([-5 5])
+
+%% K-means Clustering + PCA Scatter Plot
+
+k = 4; % number of clusters — adjust as desired
+
+% K-means on full z-score feature matrix
+[cluster_idx, ~] = kmeans(z_all, k, 'Replicates', 10, 'Distance', 'correlation');
+
+% PCA for 2D visualization
+[~, scores, ~, ~, explained] = pca(z_all);
+
+% Scatter plot colored by cluster
+figure;
+gscatter(scores(:,1), scores(:,2), cluster_idx);
+text(scores(:,1), scores(:,2), lines(1:size(z_all,1)), ...
+    'FontSize', 7, 'HorizontalAlignment', 'left', 'VerticalAlignment', 'bottom');
+xlabel(sprintf('PC1 (%.1f%%)', explained(1)));
+ylabel(sprintf('PC2 (%.1f%%)', explained(2)));
+title('K-means Clustering of SS Lines');
+legend(arrayfun(@(x) sprintf('Cluster %d', x), 1:k, 'UniformOutput', false));
 
 %% Extra: Heatmap and table for transient response period for selected pC1 SS line, combined 3 highest LED powers:
 % useful for connectomic analysis?

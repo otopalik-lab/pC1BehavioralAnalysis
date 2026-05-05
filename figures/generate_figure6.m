@@ -9,7 +9,7 @@ load('MaleMaleBehavior_BaseWorkspace.mat'); % load workspace with pre-generated 
 %% Settings for Saving Plots:
 
 SaveFormat = '.png'; %can change this as desired (see 'save' function in MATLAB for available formats'
-SavePath = '/Users/otopalika/Documents/GitHub/pC1BehavioralAnalysis/results/figure5'; % can change as desired
+SavePath = '/Users/otopalika/Documents/GitHub/pC1BehavioralAnalysis/results/figure6'; % can change as desired
 
 %% Fig 6A: Example of LED stimulus-aligned rasters of unilateral wing events, aggression events, and interfly distance for one example chamber:
 
@@ -40,4 +40,4 @@ plot_malemalebehavior_2bin_heatmap('all','aggression')
 
 %% Figure 6E: Sankey Diagrams for LED Stimulation and Post-Stimulation Periods:
 
-plot_behavior_sankey('all', {'close','aggression','unilateralwing'}, false)
+plot_behavior_sankey('all', {'close','aggression','unilateralwing'}, false, SavePath)
