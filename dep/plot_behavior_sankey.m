@@ -240,13 +240,22 @@ links_LEDON  = build_links(labels, behaviors, sig_inds_LEDON,  plot_LEDON,  pval
 links_LEDOFF = build_links(labels, behaviors, sig_inds_LEDOFF, plot_LEDOFF, pval_LEDOFF);
 
 %% ── Save .mat connection arrays ──────────────────────────────────────────────
-doSave = nargin >= 4 && ~isempty(SavePath);
+if nargin < 4 || isempty(SavePath)
+    try
+        SavePath = evalin('base', 'SavePath');
+    catch
+        SavePath = [];
+    end
+end
+doSave = ~isempty(SavePath);
 if doSave
     if ~exist(SavePath, 'dir'), mkdir(SavePath); end
     cxn_array = links_LEDON;
     save(fullfile(SavePath, ['LEDON'  norm_tag '_cxn_array.mat']), 'cxn_array');
+    save_links_csv(links_LEDON,  fullfile(SavePath, ['LEDON'  norm_tag '_cxn_array.csv']));
     cxn_array = links_LEDOFF;
     save(fullfile(SavePath, ['LEDOFF' norm_tag '_cxn_array.mat']), 'cxn_array');
+    save_links_csv(links_LEDOFF, fullfile(SavePath, ['LEDOFF' norm_tag '_cxn_array.csv']));
     fprintf('plot_behavior_sankey: connection arrays saved to %s\n', SavePath);
 end
 
@@ -544,4 +553,20 @@ end
 text(0.5, 0.6, 'p(behavior)', 'HorizontalAlignment', 'center', ...
     'FontSize', 14, 'FontWeight', 'bold', 'Parent', ax_l);
 
+end
+
+
+%% ═══════════════════════════════════════════════════════════════════════════
+%  LOCAL  save_links_csv
+%     Write an Nx4 connection array to CSV with split SS/celltype columns.
+%% ═══════════════════════════════════════════════════════════════════════════
+function save_links_csv(links, filepath)
+if isempty(links), return; end
+parts      = cellfun(@(s) strsplit(s, ' | '), links(:,1), 'UniformOutput', false);
+ss_lines   = cellfun(@(p) p{1}, parts, 'UniformOutput', false);
+cell_types = cellfun(@(p) p{2}, parts, 'UniformOutput', false);
+T = table(ss_lines, cell_types, links(:,2), ...
+    cell2mat(links(:,3)), cell2mat(links(:,4)), ...
+    'VariableNames', {'SSLine','CellType','BehaviorClass','Probability','PValue'});
+writetable(T, filepath);
 end
