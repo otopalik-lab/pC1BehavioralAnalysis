@@ -124,6 +124,10 @@ behav_probs_LEDOFF = zeros(numLines, nBeh);
 sig_inds_LEDON  = cell(1, nBeh);
 sig_inds_LEDOFF = cell(1, nBeh);
 
+% p-values (vs empty control) for each line × behavior; NaN if not tested
+pval_LEDON  = NaN(numLines, nBeh);
+pval_LEDOFF = NaN(numLines, nBeh);
+
 for bi = 1:nBeh
     bIdx = find(strcmp(fieldNames, behaviors{bi}), 1);
 
@@ -175,6 +179,9 @@ for bi = 1:nBeh
             swap                = comp_on(:, 1) ~= empty_idx;
             other_on(swap)      = comp_on(swap, 1);
             sig_global_on       = other_on(comp_on(:, 6) < 0.05);
+            for r = 1:size(comp_on, 1)
+                pval_LEDON(other_on(r), bi) = comp_on(r, 6);
+            end
         catch ME
             warning('plot_behavior_sankey: ANOVA failed for "%s" (LED ON): %s', ...
                 behaviors{bi}, ME.message);
@@ -192,6 +199,9 @@ for bi = 1:nBeh
             swap                = comp_off(:, 1) ~= empty_idx;
             other_off(swap)     = comp_off(swap, 1);
             sig_global_off      = other_off(comp_off(:, 6) < 0.05);
+            for r = 1:size(comp_off, 1)
+                pval_LEDOFF(other_off(r), bi) = comp_off(r, 6);
+            end
         catch ME
             warning('plot_behavior_sankey: ANOVA failed for "%s" (LED OFF): %s', ...
                 behaviors{bi}, ME.message);
@@ -226,8 +236,8 @@ end
 
 %% ── Build connection arrays ──────────────────────────────────────────────────
 % sig_inds_* hold global line indices; labels and prob matrices use same indexing
-links_LEDON  = build_links(labels, behaviors, sig_inds_LEDON,  plot_LEDON);
-links_LEDOFF = build_links(labels, behaviors, sig_inds_LEDOFF, plot_LEDOFF);
+links_LEDON  = build_links(labels, behaviors, sig_inds_LEDON,  plot_LEDON,  pval_LEDON);
+links_LEDOFF = build_links(labels, behaviors, sig_inds_LEDOFF, plot_LEDOFF, pval_LEDOFF);
 
 %% ── Save .mat connection arrays ──────────────────────────────────────────────
 doSave = nargin >= 4 && ~isempty(SavePath);
@@ -265,7 +275,7 @@ end  % ════════════════════════�
 %     Build an Nx3 cell array: {source_label, behavior_name, probability}
 %     sig_inds_by_beh{bi} contains GLOBAL line indices.
 %% ═══════════════════════════════════════════════════════════════════════════
-function links = build_links(all_labels, behaviors, sig_inds_by_beh, prob_mat)
+function links = build_links(all_labels, behaviors, sig_inds_by_beh, prob_mat, pval_mat)
 
 links   = {};
 counter = 1;
@@ -275,6 +285,7 @@ for bi = 1:numel(behaviors)
         links{counter, 1} = all_labels{gi};    %#ok<AGROW>
         links{counter, 2} = behaviors{bi};
         links{counter, 3} = prob_mat(gi, bi);
+        links{counter, 4} = pval_mat(gi, bi);
         counter = counter + 1;
     end
 end
