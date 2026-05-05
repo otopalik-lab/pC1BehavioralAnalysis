@@ -554,19 +554,3 @@ text(0.5, 0.6, 'p(behavior)', 'HorizontalAlignment', 'center', ...
     'FontSize', 14, 'FontWeight', 'bold', 'Parent', ax_l);
 
 end
-
-
-%% ═══════════════════════════════════════════════════════════════════════════
-%  LOCAL  save_links_csv
-%     Write an Nx4 connection array to CSV with split SS/celltype columns.
-%% ═══════════════════════════════════════════════════════════════════════════
-function save_links_csv(links, filepath)
-if isempty(links), return; end
-parts      = cellfun(@(s) strsplit(s, ' | '), links(:,1), 'UniformOutput', false);
-ss_lines   = cellfun(@(p) p{1}, parts, 'UniformOutput', false);
-cell_types = cellfun(@(p) p{2}, parts, 'UniformOutput', false);
-T = table(ss_lines, cell_types, links(:,2), ...
-    cell2mat(links(:,3)), cell2mat(links(:,4)), ...
-    'VariableNames', {'SSLine','CellType','BehaviorClass','Probability','PValue'});
-writetable(T, filepath);
-end
