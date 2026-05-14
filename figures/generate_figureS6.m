@@ -11,7 +11,7 @@ load('MaleMaleBehavior_BaseWorkspace.mat'); % load workspace with pre-generated 
 %% Settings for Saving Plots:
 
 SaveFormat = '.png'; %can change this as desired (see 'save' function in MATLAB for available formats'
-SavePath = '/Users/otopalika/Documents/GitHub/pC1BehavioralAnalysis/results/figure5'; % can change as desired
+SavePath = '/Users/otopalika/Documents/GitHub/pC1BehavioralAnalysis/results/figureS6'; % can change as desired
 
 
 %% Figure S6A: Heatmaps of behavioral probabilities over time across all pC1 SS Lines for all behavioral classes:
