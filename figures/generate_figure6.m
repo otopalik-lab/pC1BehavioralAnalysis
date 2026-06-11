@@ -8,7 +8,7 @@ load('MaleMaleBehavior_BaseWorkspace.mat'); % load workspace with pre-generated 
 
 %% Settings for Saving Plots:
 
-SaveFormat = '.png'; %can change this as desired (see 'save' function in MATLAB for available formats'
+SaveFormat = '.svg'; %can change this as desired (see 'save' function in MATLAB for available formats'
 SavePath = '/Users/otopalika/Documents/GitHub/pC1BehavioralAnalysis/results/figure6'; % can change as desired
 
 %% Fig 6A: Example of LED stimulus-aligned rasters of unilateral wing events, aggression events, and interfly distance for one example chamber:
@@ -18,12 +18,12 @@ plot_malemalebehavior_fullTimeseries(lines(2), {'unilateralwing', 'aggression'})
 
 %% Figure 6B: Plot LED stimulus-aligned rasters, PSTHs, and Inter-fly Distances for Selected Lines
 
-plot_malemalebehavior_STA('Empty Split',{'unilateralwing', 'aggression'});
-plot_malemalebehavior_STA('SS03661',{'unilateralwing', 'aggression'});
-plot_malemalebehavior_STA('SS106638',{'unilateralwing', 'aggression'});
-plot_malemalebehavior_STA('SS102671',{'unilateralwing', 'aggression'});
-plot_malemalebehavior_STA('SS100424',{'unilateralwing', 'aggression'});
-plot_malemalebehavior_STA('SS59911',{'unilateralwing', 'aggression'});
+plot_malemalebehavior_STA('Empty Split',{'unilateralwing', 'aggression'},SavePath,SaveFormat);
+plot_malemalebehavior_STA('SS03661',{'unilateralwing', 'aggression'},SavePath,SaveFormat);
+plot_malemalebehavior_STA('SS106638',{'unilateralwing', 'aggression'},SavePath,SaveFormat);
+plot_malemalebehavior_STA('SS102671',{'unilateralwing', 'aggression'},SavePath,SaveFormat);
+plot_malemalebehavior_STA('SS100424',{'unilateralwing', 'aggression'},SavePath,SaveFormat);
+plot_malemalebehavior_STA('SS59911',{'unilateralwing', 'aggression'},SavePath,SaveFormat);
 
 %% Figure 6C: Heatmaps of behavioral probabilities over time across all pC1 SS Lines for selected behavioral classes:
 

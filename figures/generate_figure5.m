@@ -43,6 +43,10 @@ plot_song_raster_psth('SS106638', 'isolated_activation')
 plot_song_raster_psth('SS106638', 'courting_activation');
 plot_song_raster_psth('SS106638', 'courting_silencing');
 
+%% Thur Seminar
+plot_song_raster_psth('SS59900', 'courting_activation');
+plot_song_raster_psth('SS100595', 'courting_activation');
+
 
 %% Fig 5D: Heatmaps for Transient Responses (1-second window) at Stimulus Onset across LED Powers
 
