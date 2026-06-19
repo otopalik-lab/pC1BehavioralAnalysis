@@ -212,6 +212,44 @@ hs.Title           = label_sine;
 es_row       = find(contains(row_labels, 'Empty'));
 stats_byline = compute_stats(data, line_idx, stim_period, dataset_type, opts.alpha, es_row);
 
+%% ── Print full statistics report ─────────────────────────────────────────
+fprintf('\n%s\n', repmat('=', 1, 60));
+fprintf('STATS REPORT: %s  |  %s\n', disp_name, upper(stim_period));
+fprintf('%s\n', repmat('=', 1, 60));
+for k = 1:n_lines
+    fprintf('\n--- %s ---\n', row_labels{k});
+    for song = {'pulse', 'sine'}
+        s   = song{1};
+        res = stats_byline(k).([s '_res']);
+        fprintf('  %s:  ANOVA p = %.4f\n', upper(s), stats_byline(k).([s '_anova_p']));
+        if iscell(res)
+            % Courting: cell array of [col, grp1, grp2, lCI, diff, uCI, p]
+            if isempty(res)
+                fprintf('    (no significant comparisons)\n');
+            else
+                for r = 1:numel(res)
+                    row = res{r};
+                    fprintf('    Intensity col %d:  Group %d vs %d:  diff = %6.3f  [%6.3f, %6.3f]  p = %.4f  *\n', ...
+                        row(1), row(2), row(3), row(5), row(4), row(6), row(7));
+                end
+            end
+        else
+            % Isolated: full multcompare matrix (rows x 6)
+            if isempty(res)
+                fprintf('    (no significant comparisons)\n');
+            else
+                for r = 1:size(res, 1)
+                    sig = '';
+                    if res(r,6) < opts.alpha, sig = '  *'; end
+                    fprintf('    Group %d vs %d:  diff = %6.3f  [%6.3f, %6.3f]  p = %.4f%s\n', ...
+                        res(r,1), res(r,2), res(r,4), res(r,3), res(r,5), res(r,6), sig);
+                end
+            end
+        end
+    end
+end
+fprintf('\n%s\n\n', repmat('=', 1, 60));
+
 %% ── Post-render: y-labels and horizontal colorbars ───────────────────────
 ax_p = struct(hp).Axes;
 ax_s = struct(hs).Axes;
@@ -467,6 +505,141 @@ function delta = song_delta_trial(d, period, song_type, j)
 end
 
 
+% function stats_byline = compute_stats(data, line_idx, period, dataset_type, alpha, es_idx)
+% %COMPUTE_STATS  Determine which LED intensities are significantly different
+% %               from baseline or from the empty-split control.
+% %
+% %   Isolated : one-way ANOVA + Dunnett's test per line (each LED intensity
+% %              vs. PRE, control group = 1).
+% %   Courting : one-way ANOVA + Dunnett's test per LED intensity across all
+% %              selected lines, with es_idx as the Dunnett control group.
+% %              Lowest LED intensity column is skipped to match heatmap columns.
+% 
+% n_lines      = length(line_idx);
+% stats_byline = repmat(struct('pulse', [], 'sine', []), n_lines, 1);
+% 
+% switch dataset_type
+% 
+%     case 'isolated_activation'
+%         for k = 1:n_lines
+%             i     = line_idx(k);
+%             pre_p = data(i).pulsePerMin.PRE(:, 1);
+%             pre_s = data(i).sinePerMin.PRE(:, 1);
+%             switch period
+%                 case 'led'
+%                     p_temp = [pre_p, data(i).pulsePerMin.LED];
+%                     s_temp = [pre_s, data(i).sinePerMin.LED];
+%                 case 'transient'
+%                     p_temp = [pre_p, data(i).pulsePerMin.TRANSIENT];
+%                     s_temp = [pre_s, data(i).sinePerMin.TRANSIENT];
+%                 case 'post'
+%                     p_temp = [pre_p, data(i).pulsePerMin.POST];
+%                     s_temp = [pre_s, data(i).sinePerMin.POST];
+%             end
+%             n_trials    = size(p_temp, 1);
+%             n_int_total = size(p_temp, 2);
+%             grp_lbl     = repelem((1:n_int_total)', n_trials);
+% 
+%             [~,~,st] = anova1(p_temp(:), grp_lbl, 'off');
+%             res = multcompare(st, 'CriticalValueType', 'dunnett', ...
+%                 'Approximate', true, 'ControlGroup', 1, ...
+%                 'Alpha', alpha, 'Display', 'off');
+%             stats_byline(k).pulse = find(res(:,6) < alpha);
+% 
+%             [~,~,st] = anova1(s_temp(:), grp_lbl, 'off');
+%             res = multcompare(st, 'CriticalValueType', 'dunnett', ...
+%                 'Approximate', true, 'ControlGroup', 1, ...
+%                 'Alpha', alpha, 'Display', 'off');
+%             stats_byline(k).sine = find(res(:,6) < alpha);
+%         end
+% 
+%     case 'courting_activation'
+%         n_int  = size(song_delta(data(line_idx(1)), period, 'pulse'), 2);
+%         n_disp = n_int;
+%         col_offset = 0;
+% 
+%         for col = 1:n_disp
+%             p_vals = [];   s_vals = [];
+%             p_grps = [];   s_grps = [];
+% 
+%             for k = 1:n_lines
+%                 i  = line_idx(k);
+%                 dp = song_delta(data(i), period, 'pulse');
+%                 ds = song_delta(data(i), period, 'sine');
+%                 p_vals = [p_vals; dp(:, col + col_offset)];   %#ok<AGROW>
+%                 s_vals = [s_vals; ds(:, col + col_offset)];   %#ok<AGROW>
+%                 p_grps = [p_grps; k * ones(size(dp,1), 1)];  %#ok<AGROW>
+%                 s_grps = [s_grps; k * ones(size(ds,1), 1)];  %#ok<AGROW>
+%             end
+% 
+%             [~,~,st] = anova1(p_vals, p_grps, 'off');
+%             res = multcompare(st, 'CriticalValueType', 'dunnett', ...
+%                 'Approximate', true, 'ControlGroup', es_idx, ...
+%                 'Alpha', alpha, 'Display', 'off');
+%             for r = 1:size(res, 1)
+%                 if res(r,6) < alpha
+%                     k = res(r, 1:2);  k = k(k ~= es_idx);
+%                     if ~isempty(k), stats_byline(k).pulse(end+1) = col; end %#ok<AGROW>
+%                 end
+%             end
+% 
+%             [~,~,st] = anova1(s_vals, s_grps, 'off');
+%             res = multcompare(st, 'CriticalValueType', 'dunnett', ...
+%                 'Approximate', true, 'ControlGroup', es_idx, ...
+%                 'Alpha', alpha, 'Display', 'off');
+%             for r = 1:size(res, 1)
+%                 if res(r,6) < alpha
+%                     k = res(r, 1:2);  k = k(k ~= es_idx);
+%                     if ~isempty(k), stats_byline(k).sine(end+1) = col; end  %#ok<AGROW>
+%                 end
+%             end
+%         end
+% 
+%     case 'courting_silencing'
+%         n_int  = size(song_delta(data(line_idx(1)), period, 'pulse'), 2);
+%         n_disp = n_int - 1;
+%         col_offset = 1;
+% 
+%         for col = 1:n_disp
+%             p_vals = [];   s_vals = [];
+%             p_grps = [];   s_grps = [];
+% 
+%             for k = 1:n_lines
+%                 i  = line_idx(k);
+%                 dp = song_delta(data(i), period, 'pulse');
+%                 ds = song_delta(data(i), period, 'sine');
+%                 p_vals = [p_vals; dp(:, col + col_offset)];   %#ok<AGROW>
+%                 s_vals = [s_vals; ds(:, col + col_offset)];   %#ok<AGROW>
+%                 p_grps = [p_grps; k * ones(size(dp,1), 1)];  %#ok<AGROW>
+%                 s_grps = [s_grps; k * ones(size(ds,1), 1)];  %#ok<AGROW>
+%             end
+% 
+%             [~,~,st] = anova1(p_vals, p_grps, 'off');
+%             res = multcompare(st, 'CriticalValueType', 'dunnett', ...
+%                 'Approximate', true, 'ControlGroup', es_idx, ...
+%                 'Alpha', alpha, 'Display', 'off');
+%             for r = 1:size(res, 1)
+%                 if res(r,6) < alpha
+%                     k = res(r, 1:2);  k = k(k ~= es_idx);
+%                     if ~isempty(k), stats_byline(k).pulse(end+1) = col; end %#ok<AGROW>
+%                 end
+%             end
+% 
+%             [~,~,st] = anova1(s_vals, s_grps, 'off');
+%             res = multcompare(st, 'CriticalValueType', 'dunnett', ...
+%                 'Approximate', true, 'ControlGroup', es_idx, ...
+%                 'Alpha', alpha, 'Display', 'off');
+%             for r = 1:size(res, 1)
+%                 if res(r,6) < alpha
+%                     k = res(r, 1:2);  k = k(k ~= es_idx);
+%                     if ~isempty(k), stats_byline(k).sine(end+1) = col; end  %#ok<AGROW>
+%                 end
+%             end
+%         end
+% 
+% end % switch dataset_type
+% end % compute_stats
+
 function stats_byline = compute_stats(data, line_idx, period, dataset_type, alpha, es_idx)
 %COMPUTE_STATS  Determine which LED intensities are significantly different
 %               from baseline or from the empty-split control.
@@ -478,7 +651,9 @@ function stats_byline = compute_stats(data, line_idx, period, dataset_type, alph
 %              Lowest LED intensity column is skipped to match heatmap columns.
 
 n_lines      = length(line_idx);
-stats_byline = repmat(struct('pulse', [], 'sine', []), n_lines, 1);
+stats_byline = repmat(struct('pulse', [], 'sine', [], ...
+                             'pulse_res', [], 'sine_res', [], ...
+                             'pulse_anova_p', NaN, 'sine_anova_p', NaN), n_lines, 1);
 
 switch dataset_type
 
@@ -502,17 +677,21 @@ switch dataset_type
             n_int_total = size(p_temp, 2);
             grp_lbl     = repelem((1:n_int_total)', n_trials);
 
-            [~,~,st] = anova1(p_temp(:), grp_lbl, 'off');
+            [p_ano_p,~,st] = anova1(p_temp(:), grp_lbl, 'off');
             res = multcompare(st, 'CriticalValueType', 'dunnett', ...
                 'Approximate', true, 'ControlGroup', 1, ...
                 'Alpha', alpha, 'Display', 'off');
-            stats_byline(k).pulse = find(res(:,6) < alpha);
+            stats_byline(k).pulse         = find(res(:,6) < alpha);
+            stats_byline(k).pulse_res     = res;
+            stats_byline(k).pulse_anova_p = p_ano_p;
 
-            [~,~,st] = anova1(s_temp(:), grp_lbl, 'off');
+            [p_ano_s,~,st] = anova1(s_temp(:), grp_lbl, 'off');
             res = multcompare(st, 'CriticalValueType', 'dunnett', ...
                 'Approximate', true, 'ControlGroup', 1, ...
                 'Alpha', alpha, 'Display', 'off');
-            stats_byline(k).sine = find(res(:,6) < alpha);
+            stats_byline(k).sine         = find(res(:,6) < alpha);
+            stats_byline(k).sine_res     = res;
+            stats_byline(k).sine_anova_p = p_ano_s;
         end
 
     case 'courting_activation'
@@ -534,25 +713,41 @@ switch dataset_type
                 s_grps = [s_grps; k * ones(size(ds,1), 1)];  %#ok<AGROW>
             end
 
-            [~,~,st] = anova1(p_vals, p_grps, 'off');
+            [p_ano_p,~,st] = anova1(p_vals, p_grps, 'off');
             res = multcompare(st, 'CriticalValueType', 'dunnett', ...
                 'Approximate', true, 'ControlGroup', es_idx, ...
                 'Alpha', alpha, 'Display', 'off');
             for r = 1:size(res, 1)
                 if res(r,6) < alpha
                     k = res(r, 1:2);  k = k(k ~= es_idx);
-                    if ~isempty(k), stats_byline(k).pulse(end+1) = col; end %#ok<AGROW>
+                    if ~isempty(k)
+                        stats_byline(k).pulse(end+1)     = col;        %#ok<AGROW>
+                        stats_byline(k).pulse_res{end+1} = [col, res(r,:)]; %#ok<AGROW>
+                    end
+                end
+            end
+            for k = 1:n_lines
+                if isempty(stats_byline(k).pulse_anova_p) || isnan(stats_byline(k).pulse_anova_p)
+                    stats_byline(k).pulse_anova_p = p_ano_p;
                 end
             end
 
-            [~,~,st] = anova1(s_vals, s_grps, 'off');
+            [p_ano_s,~,st] = anova1(s_vals, s_grps, 'off');
             res = multcompare(st, 'CriticalValueType', 'dunnett', ...
                 'Approximate', true, 'ControlGroup', es_idx, ...
                 'Alpha', alpha, 'Display', 'off');
             for r = 1:size(res, 1)
                 if res(r,6) < alpha
                     k = res(r, 1:2);  k = k(k ~= es_idx);
-                    if ~isempty(k), stats_byline(k).sine(end+1) = col; end  %#ok<AGROW>
+                    if ~isempty(k)
+                        stats_byline(k).sine(end+1)     = col;         %#ok<AGROW>
+                        stats_byline(k).sine_res{end+1} = [col, res(r,:)]; %#ok<AGROW>
+                    end
+                end
+            end
+            for k = 1:n_lines
+                if isempty(stats_byline(k).sine_anova_p) || isnan(stats_byline(k).sine_anova_p)
+                    stats_byline(k).sine_anova_p = p_ano_s;
                 end
             end
         end
@@ -576,28 +771,45 @@ switch dataset_type
                 s_grps = [s_grps; k * ones(size(ds,1), 1)];  %#ok<AGROW>
             end
 
-            [~,~,st] = anova1(p_vals, p_grps, 'off');
+            [p_ano_p,~,st] = anova1(p_vals, p_grps, 'off');
             res = multcompare(st, 'CriticalValueType', 'dunnett', ...
                 'Approximate', true, 'ControlGroup', es_idx, ...
                 'Alpha', alpha, 'Display', 'off');
             for r = 1:size(res, 1)
                 if res(r,6) < alpha
                     k = res(r, 1:2);  k = k(k ~= es_idx);
-                    if ~isempty(k), stats_byline(k).pulse(end+1) = col; end %#ok<AGROW>
+                    if ~isempty(k)
+                        stats_byline(k).pulse(end+1)     = col;        %#ok<AGROW>
+                        stats_byline(k).pulse_res{end+1} = [col, res(r,:)]; %#ok<AGROW>
+                    end
+                end
+            end
+            for k = 1:n_lines
+                if isempty(stats_byline(k).pulse_anova_p) || isnan(stats_byline(k).pulse_anova_p)
+                    stats_byline(k).pulse_anova_p = p_ano_p;
                 end
             end
 
-            [~,~,st] = anova1(s_vals, s_grps, 'off');
+            [p_ano_s,~,st] = anova1(s_vals, s_grps, 'off');
             res = multcompare(st, 'CriticalValueType', 'dunnett', ...
                 'Approximate', true, 'ControlGroup', es_idx, ...
                 'Alpha', alpha, 'Display', 'off');
             for r = 1:size(res, 1)
                 if res(r,6) < alpha
                     k = res(r, 1:2);  k = k(k ~= es_idx);
-                    if ~isempty(k), stats_byline(k).sine(end+1) = col; end  %#ok<AGROW>
+                    if ~isempty(k)
+                        stats_byline(k).sine(end+1)     = col;         %#ok<AGROW>
+                        stats_byline(k).sine_res{end+1} = [col, res(r,:)]; %#ok<AGROW>
+                    end
+                end
+            end
+            for k = 1:n_lines
+                if isempty(stats_byline(k).sine_anova_p) || isnan(stats_byline(k).sine_anova_p)
+                    stats_byline(k).sine_anova_p = p_ano_s;
                 end
             end
         end
 
 end % switch dataset_type
 end % compute_stats
+

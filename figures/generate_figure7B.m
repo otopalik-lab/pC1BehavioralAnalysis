@@ -24,15 +24,15 @@
 %   perframe/dcenter.mat     (inter-fly distance perframe feature, mm)
 %   registered_trx.mat       (FlyDisco registered tracks)
 
-%% Add repo to path
-addpath(genpath('/groups/rubin/home/schretterc/Documents/FlyDiscoAnalysis_ExptsToAnalyze_Test/pC1andaIPgProject_analysis/Male/pC1BehavioralAnalysis'));
+%% Add repo to path: 
+addpath(genpath('/Users/otopalika/Documents/GitHub/pC1BehavioralAnalysis'));
 
 %% Settings — edit these for your data layout / analysis windows
 cfg = struct();
 cfg.conditions     = {'empty', 'aIPg'};
 cfg.datadirs       = struct();
-cfg.datadirs.empty = '/groups/rubin/home/schretterc/Documents/FlyDiscoAnalysis_ExptsToAnalyze_Test/pC1andaIPgProject_analysis/Male/empty';
-cfg.datadirs.aIPg  = '/groups/rubin/home/schretterc/Documents/FlyDiscoAnalysis_ExptsToAnalyze_Test/pC1andaIPgProject_analysis/Male/aIPg';
+cfg.datadirs.empty = '/Users/otopalika/Documents/GitHub/pC1BehavioralAnalysis/data/EmptySS_Chrimson';
+cfg.datadirs.aIPg  = '/Users/otopalika/Documents/GitHub/pC1BehavioralAnalysis/data/aIPgSS_Chrimson';
 
 cfg.behavior_score_file = 'scores_MMAggfRGBub.mat';
 cfg.dcenter_relpath     = fullfile('perframe','dcenter.mat');
@@ -47,7 +47,7 @@ cfg.bin            = 60;       % time-course bin size, frames
 cfg.fps            = 169.99;
 
 cfg.writecsv  = true;         % set true to also save the original CSV summaries
-cfg.outputdir = '/groups/rubin/home/schretterc/Documents/FlyDiscoAnalysis_ExptsToAnalyze_Test/pC1andaIPgProject_analysis/Male/pC1BehavioralAnalysis/results/figureS7R';
+cfg.outputdir = '/Users/otopalika/Documents/GitHub/pC1BehavioralAnalysis/results/Figure7B';
 
 % Plot settings (user-adjustable)
 plot_window_min = [0.25 1.25];   % minutes (movie time)
@@ -65,7 +65,7 @@ condition_colors.aIPg  = [0.50 0.45 0.65];
 
 % Save options
 SaveFormat = '.pdf';
-SavePath   = '/groups/rubin/home/schretterc/Documents/FlyDiscoAnalysis_ExptsToAnalyze_Test/pC1andaIPgProject_analysis/Male/pC1BehavioralAnalysis/results/figureS7R';
+SavePath   = '/Users/otopalika/Documents/GitHub/pC1BehavioralAnalysis/results/Figure7B';
 
 %% Load + assemble per-experiment workspace (assigns MultiStimData, MultiStimCfg)
 build_multistim_workspace(cfg);

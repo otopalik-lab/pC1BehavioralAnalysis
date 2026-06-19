@@ -1,127 +1,40 @@
 % This script regenerates all of the plots that comprise Figure 5. pC1
 % differentially promote and modulate male acoustic signaling.
 
+%% Edit Path to Repository: 
 
-%% if need to load cell types and line numbers:
+PathToRepository = '/Users/otopalika/Documents/GitHub/pC1BehavioralAnalysis';
 
-addpath(genpath('/Users/otopalika/Documents/GitHub/pC1BehavioralAnalysis'));
-selectedLines = table2struct(readtable('SSLines_withCelltypes.csv')); % Load SS line and celltype lists%
-lines = {selectedLines.Var1}; lines = lines([1:36]);
-celltypes = {selectedLines.Var2}; celltypes = celltypes([1:36]);
 
 %% Load Data and Metadata to for Base Workspace:
-addpath(genpath('/Users/otopalika/Documents/GitHub/pC1BehavioralAnalysis'));
+addpath(genpath(PathToRepository));
 % Load Song Data for all Experiment types:
 load('SongRecordingData_BaseWorkspace.mat')
-
-%% Settings for Saving Plots:
-
+% Settings for Saving Plots:
 SaveFormat = '.png'; %can change this as desired (see 'save' function in MATLAB for available formats'
 SavePath = '/Users/otopalika/Documents/GitHub/pC1BehavioralAnalysis/results/figure5'; % can change as desired
 
-%% Fig 5A: Setup & Complete Optogenetic Stimulation Paradigms
-
-figure(1);
-subplot(3,1,1);
-power_calib_factor = max(data_courtingmale_activation(1).LEDPowers)./max(data_courtingmale_activation(1).LED);
-plot([1:length(data_courtingmale_activation(1).LED)]./data_courtingmale_activation(1).fs, power_calib_factor.*data_courtingmale_activation(1).LED, 'r-','LineWidth',1)
-ylabel('629nm LED (mW/cm^2)'); box off
-
-subplot(3,1,2);
-power_calib_factor = max(data_courtingmale_silencing(1).LEDPowers)./max(data_courtingmale_silencing(1).LED);
-plot([1:length(data_courtingmale_silencing(1).LED)]./data_courtingmale_silencing(1).fs, power_calib_factor.*data_courtingmale_silencing(1).LED, 'g-','LineWidth',1)
-ylabel('525nm LED (mW/cm^2)'); box off
-
-subplot(3,1,3);
-power_calib_factor = max(data_isolatedmale_activation(1).LEDPowers)./max(data_isolatedmale_activation(1).LED);
-plot([1:length(data_isolatedmale_activation(1).LED)]./data_isolatedmale_activation(1).fs, power_calib_factor.*data_isolatedmale_activation(1).LED, 'r-','LineWidth',1)
-ylabel('629nm LED (mW/cm^2)'); box off; xlabel('seconds')
-
-%% Fig 5C: LED Stimulus-Aligned Sine and Pulse event raster plots, and PSTHs for selected pC1 SS line:
-% For SS106638, expressing in pC1_13a, 14ab:
-plot_song_raster_psth('SS106638', 'isolated_activation')
-plot_song_raster_psth('SS106638', 'courting_activation');
-plot_song_raster_psth('SS106638', 'courting_silencing');
-
-%% Thur Seminar
-plot_song_raster_psth('SS59900', 'courting_activation');
-plot_song_raster_psth('SS100595', 'courting_activation');
-
-
-%% Fig 5D: Heatmaps for Transient Responses (1-second window) at Stimulus Onset across LED Powers
-
+%% Fig 5B: Heatmaps for Transient Responses (1-second window) at Stimulus Onset across LED Powers
 
 [pulse_activate, sine_activate] = plot_songbypower_heatmap('all','courting_activation','transient');
 [pulse_silence, sine_silence] = plot_songbypower_heatmap('all','courting_silencing','transient');
-[pulse_activate_iso_transient, sine_activate_iso_transient] = plot_songbypower_heatmap('all','isolated_activation', 'transient');
-[pulse_activate_iso_post, sine_activate_iso_post] = plot_songbypower_heatmap('all','isolated_activation', 'post');
 
 
-%% Fig 5?: Hierarchical Clustering of SS Lines by Z-score Profile
+%% Fig 5C: LED Stimulus-Aligned Sine and Pulse event raster plots, and PSTHs for selected pC1 SS line:
+% For SS106638, expressing in pC1_13a, 14ab:
 
-% Concatenate z-score matrices: rows = SS lines, cols = all features
-% [pulse_activate | sine_activate | pulse_silence | sine_silence]
-z_all = [pulse_activate, sine_activate, pulse_silence, sine_silence];
+%Function that finds the audiofiles corresponding to line fo interest, if
+%given location to look for these:
 
-% Replace NaNs with 0 (lines with missing data at a power contribute nothing)
-z_all(isnan(z_all)) = 0;
-
-% Pairwise correlation distances between lines
-D = pdist(z_all, 'correlation');
-
-% Ward linkage
-Z_link = linkage(D, 'ward');
-
-% Dendrogram — capture leaf order for sorting the heatmap
-figure;
-lines_reordered = lines([1 36 2:35]);
-[~, ~, leaf_order] = dendrogram(Z_link, 0, 'Labels', lines_reordered(1:size(z_all,1)), 'Orientation', 'left');
-set(gca, 'YDir', 'reverse');
-title('Hierarchical Clustering of SS Lines by Song Z-score Profile');
-xlabel('Ward Linkage Distance');
-
-%Colormap
-n = 256;
-cmap = [linspace(0,1,n/2)', linspace(0,1,n/2)', ones(n/2,1); ...
-        ones(n/2,1), linspace(1,0,n/2)', linspace(1,0,n/2)'];
-colormap(cmap);
+plot_song_raster_psth('SS106638', 'courting_activation','audio_dir',PathToRepository);
+plot_song_raster_psth('SS106638', 'courting_silencing','audio_dir',PathToRepository);
 
 
-% Heatmap of concatenated z-scores, rows sorted by dendrogram leaf order
-figure;
-imagesc(z_all(leaf_order, :));
-clim_val = max(abs(z_all(:)));
-caxis([-clim_val, clim_val]);   % use caxis for MATLAB < R2022a compatibility
-colorbar;
-yticks(1:size(z_all,1));
-yticklabels(lines_reordered(leaf_order));
-colormap(cmap);
-xlabel('Feature (power × song type × condition)');
-title('SS Lines Sorted by Hierarchical Clustering');
-clim([-5 5])
 
-%% K-means Clustering + PCA Scatter Plot
-
-k = 4; % number of clusters — adjust as desired
-
-% K-means on full z-score feature matrix
-[cluster_idx, ~] = kmeans(z_all, k, 'Replicates', 10, 'Distance', 'correlation');
-
-% PCA for 2D visualization
-[~, scores, ~, ~, explained] = pca(z_all);
-
-% Scatter plot colored by cluster
-figure;
-gscatter(scores(:,1), scores(:,2), cluster_idx);
-text(scores(:,1), scores(:,2), lines(1:size(z_all,1)), ...
-    'FontSize', 7, 'HorizontalAlignment', 'left', 'VerticalAlignment', 'bottom');
-xlabel(sprintf('PC1 (%.1f%%)', explained(1)));
-ylabel(sprintf('PC2 (%.1f%%)', explained(2)));
-title('K-means Clustering of SS Lines');
-legend(arrayfun(@(x) sprintf('Cluster %d', x), 1:k, 'UniformOutput', false));
-
-%% Extra: Heatmap and table for transient response period for selected pC1 SS line, combined 3 highest LED powers:
-% useful for connectomic analysis?
+%% For Figures 5E and S10: Heatmap and table for transient response period for selected pC1 SS line, combined 3 highest LED powers:
+% Used for PCA visualization of pC1-to-Song Premotor Neuron Connectivity
+% and song phenotypes (executed in
+% connectomics_figure5_pC1toSongPathDiscovery_PCA.ipynb)
 
 % Get Z scores (relative to Empty Split Control) for highest LED power
 % during early response period ("transient") and accompanying p values, to
@@ -132,4 +45,4 @@ legend(arrayfun(@(x) sprintf('Cluster %d', x), 1:k, 'UniformOutput', false));
 %this table is saved as 'CourtingMaleActivation_Zscores_Pvalues.csv' in the data folder
 
 [fig, tbl] = plot_song_heatmap_byperiod('all', 'courting_activation','period','transient');
-[fig_silence, tbl_silence] = plot_song_heatmap_byperiod('all', 'courting_silencing','period','transient');
+%[fig_silence, tbl_silence] = plot_song_heatmap_byperiod('all', 'courting_silencing','period','transient');

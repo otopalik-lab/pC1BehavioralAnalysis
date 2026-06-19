@@ -35,6 +35,9 @@ function fig = plot_song_raster_psth(line_input, dataset_type, varargin)
 %   'ylim_pulse'      [lo hi]   Pulse PSTH left y-axis limits
 %   'ylim_sine'       [lo hi]   Sine PSTH right y-axis limits
 %   'psth_axis'       logical   Show axes and xlabel('seconds') on PSTH panel (default false)
+%   'audio_dir'       char      Override directory for WAV files. When set,
+%                               the filename is taken from paths2audio but the
+%                               parent directory is replaced with this path.
 %   'SavePath'        char      Directory to save figure (requires SaveFormat)
 %   'SaveFormat'      char      File format, e.g. '.pdf', '.png', '.svg'
 %
@@ -145,6 +148,7 @@ ip.addParameter('psth_xlim',     def_psth_xlim,    @(x) isnumeric(x) && numel(x)
 ip.addParameter('ylim_pulse',    def_ylim_pulse,   @(x) isnumeric(x) && numel(x)==2);
 ip.addParameter('ylim_sine',     def_ylim_sine,    @(x) isnumeric(x) && numel(x)==2);
 ip.addParameter('psth_axis',     false,            @islogical);
+ip.addParameter('audio_dir',     '',               @ischar);
 ip.addParameter('SavePath',      '',               @ischar);
 ip.addParameter('SaveFormat',    '',               @ischar);
 ip.parse(varargin{:});
@@ -214,7 +218,16 @@ axis off;
 
 %% ── Panel 2: Example raw audio trace ────────────────────────────────────
 nexttile;
-wavfile    = char(data(line_idx).paths2audio(opts.audio_trial));
+if ~isempty(opts.audio_dir)
+    audiofilename = char(data(line_idx).audiofiles(opts.audio_trial));
+    hits = dir(fullfile(opts.audio_dir, '**', audiofilename));
+    if isempty(hits)
+        error('plot_song_raster_psth: could not find "%s" anywhere under:\n  %s', audiofilename, opts.audio_dir);
+    end
+    wavfile = fullfile(hits(1).folder, hits(1).name);
+else
+    wavfile = char(data(line_idx).paths2audio(opts.audio_trial));
+end
 timewindow = [LED_bouts(opts.audio_ref_bout,1) - audio_pre, ...
               LED_bouts(opts.audio_ref_bout,2) + audio_pre] ./ fs;
 PlotSampleAudioTrace(wavfile, timewindow);

@@ -22,11 +22,14 @@ end
 [LED1,fs] = audioread(fullfile(files(LED1_ind).folder,files(LED1_ind).name));
 
 % Identify Audio Channel and Signal:
-
+rawsignal_ind = [];
 for i = 1:nfiles
     if strfind(files(i).name, wavname)
         rawsignal_ind = i;
     end
+end
+if isempty(rawsignal_ind)
+    error('PlotSampleAudioTrace: no WAV file matching "%s" found in:\n  %s', wavname, char(folder));
 end
 [raw,fs] = audioread(fullfile(files(rawsignal_ind).folder,files(rawsignal_ind).name));
 
