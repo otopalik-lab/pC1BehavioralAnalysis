@@ -28,10 +28,6 @@ plot_malemalebehavior_STA('SS102671',{'unilateralwing', 'aggression'},SavePath,S
 plot_malemalebehavior_STA('SS100424',{'unilateralwing', 'aggression'},SavePath,SaveFormat);
 plot_malemalebehavior_STA('SS59911',{'unilateralwing', 'aggression'},SavePath,SaveFormat);
 
-plot_malemalebehavior_STA('SS102696',{'unilateralwing', 'aggression'},SavePath,SaveFormat);
-plot_malemalebehavior_STA('SS100769',{'unilateralwing', 'aggression'},SavePath,SaveFormat);
-
-
 %% Figure 6C: Heatmaps of behavioral probabilities over time across all pC1 SS Lines for selected behavioral classes:
 
 binsize = 1000; %in milliseconds
