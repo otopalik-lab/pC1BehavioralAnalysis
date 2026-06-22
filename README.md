@@ -24,7 +24,7 @@ This repository contains code for the processing and analysis of behavioral data
 
 5. Open and run any script in the `figures` directory to regenerate panels with behavioral analyses for Figures 5-7 and Supplemental Figures S5-8, S11-12. Scripts can be run all at once or section-by-section using MATLAB's cell mode (Ctrl+Enter / Cmd+Enter per `%%` section).
 
-6. Optionally, raw song recordings, song type classifications, animal tracking data, and behavioral classifications are available at [insert FigShare link here].
+6. Raw song recordings, song type classifications, animal tracking data, and behavioral classifications are available at by request. As a forewarning, together these comprise 500GB of data. Thus, it is recommended that users first explore the processed data provided at the link in Step 2 above.
 
 ## Repository Contents
 
