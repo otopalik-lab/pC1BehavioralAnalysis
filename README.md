@@ -9,7 +9,7 @@ This repository contains code for the processing and analysis of behavioral data
 
 1. Clone this repository.
 
-2. Download the figure source data from [insert FigShare link here] and place the downloaded `data` folder in the repository's main directory (`.../pC1BehavioralAnalysis/data`).
+2. Download the [figure source data](https://doi.org/10.25378/janelia.32666358) and place the downloaded `data` folder in the repository's main directory (`.../pC1BehavioralAnalysis/data`).
 
 3. In each figure script you intend to run (located in the `figures` directory), update the `PathToRepository` variable at the top of the script to match the location of the repository on your machine:
    ```matlab
