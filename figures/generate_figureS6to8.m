@@ -8,7 +8,7 @@ load('SongRecordingData_BaseWorkspace.mat')
 SaveFormat = '.png'; %can change this as desired (see 'save' function in MATLAB for available formats'
 SavePath = '/Users/otopalika/Documents/GitHub/pC1BehavioralAnalysis/results/figureS6to8'; % can change as desired
 
-%% Figure Supplements 6-8: PSTH plots for all SS lines
+%% Figure Supplements 6-8: PSTH plots for all SS lines (could take ~3 minutes for this section to run!)
 
 plot_song_psth_alllines('all', 'isolated_activation')
 plot_song_psth_alllines('all', 'courting_activation')

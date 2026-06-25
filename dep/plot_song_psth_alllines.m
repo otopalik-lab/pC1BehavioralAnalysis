@@ -219,25 +219,31 @@ for f = 1:n_figs
         end
 
         % Pool events across all plotbouts × all trials
-        all_pulse_times = [];
-        all_sine_times  = [];
-        trial_count     = 0;
+        n_bouts      = length(opts.plotbouts);
+        n_trials     = length(trial_list);
+        pulse_cell   = cell(n_bouts, n_trials);
+        sine_cell    = cell(n_bouts, n_trials);
+        trial_count  = 0;
 
-        for k = 1:length(opts.plotbouts)
+        for k = 1:n_bouts
             bout_onset = LED_bouts(opts.plotbouts(k), 1);
             bout_end   = LED_bouts(opts.plotbouts(k), 2);
-            for j = trial_list
+            for ji = 1:n_trials
+                j = trial_list(ji);
                 ev = data(li).pulse_idx(data(li).pulse_trial_idx == j);
                 ev = ev(ev > bout_onset - pre_samples & ev < bout_end + pre_samples);
-                all_pulse_times = [all_pulse_times; ev(:) - bout_onset + pre_samples]; %#ok<AGROW>
+                pulse_cell{k, ji} = ev(:) - bout_onset + pre_samples;
 
                 ev = data(li).sine_idx(data(li).sine_trial_idx == j);
                 ev = ev(ev > bout_onset - pre_samples & ev < bout_end + pre_samples);
-                all_sine_times = [all_sine_times; ev(:) - bout_onset + pre_samples];   %#ok<AGROW>
+                sine_cell{k, ji}  = ev(:) - bout_onset + pre_samples;
 
                 trial_count = trial_count + 1;
             end
         end
+
+        all_pulse_times = vertcat(pulse_cell{:});
+        all_sine_times  = vertcat(sine_cell{:});
 
         PulseRate = psth(all_pulse_times, binsize, fs, trial_count, trial_len);
         SineRate  = psth(all_sine_times,  binsize, fs, trial_count, trial_len);

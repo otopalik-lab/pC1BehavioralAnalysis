@@ -35,6 +35,46 @@ This repository contains code for the processing and analysis of behavioral data
 | `results` | Figure outputs are saved here when `SavePath` and `SaveFormat` are specified in a generate_figure script. Not tracked by git (listed in `.gitignore`). |
 | `dep`     | Helper functions used by the generate_figure scripts. Includes functions written by A. Otopalik (at times with Claude's assistance) and third-party functions from MATLAB File Exchange (credited below). |
 
+## Key Helper Functions (`dep`)
+
+The following functions in `dep` are called by the figure-generating scripts. Functions not listed here are either third-party utilities (see [Third-Party Dependencies](#third-party-dependencies)) or internal helpers called indirectly.
+
+### Analysis of Male Acoustic Signaling (Courtship Song) with Optogenetic Perturbations
+
+| Function | Description |
+|----------|-------------|
+| `plot_song_raster_psth` | Generates a 5-panel figure with an LED stimulus trace, raw audio trace, pulse/sine song rasters, and a joint PSTH for a single SS line. |
+| `plot_song_psth_alllines` | Produces LED-aligned joint pulse/sine PSTHs for multiple SS lines, distributing lines across figures. |
+| `plot_songbypower_heatmap` | Plots a heatmap of evoked song across SS lines (rows) and LED powers (columns), with an accompanying significance heatmap. |
+| `plot_song_heatmap_byperiod` | Generates a heatmap of evoked song pooled across the top N LED powers, with columns for Transient, LED, and Post stimulus periods. |
+
+### Analysis of Male-Male Interactions with Optogenetic Activation
+
+| Function | Description |
+|----------|-------------|
+| `plot_malemalebehavior_fullTimeseries` | Plots LED-aligned behavioral rasters and inter-fly distance time series for male–male interaction experiments. |
+| `plot_malemalebehavior_STA` | Plots stimulus-triggered averages (rasters, PSTHs, inter-fly distance) aligned to the 3 highest-power LED pulses for a specified behavior. |
+| `plot_malemalebehavior_PSTH_heatmap` | Plots a peri-stimulus PSTH heatmap of behavioral probability across SS lines, aligned to high-power LED epochs. |
+| `plot_malemalebehavior_stimbin_heatmap` | Plots a 2-bin (pre vs. LED-on) heatmap of behavioral probability across SS lines with significance annotations. |
+| `plot_malemalebehavior_2bin_heatmap` | Plots a 2-bin (30 s LED-on vs. 30 s LED-off) PSTH heatmap across SS lines with significance annotations. |
+| `plot_behavior_sankey` | Computes behavioral probabilities during LED stimulation epochs and renders Sankey diagrams showing behavioral state transitions. |
+
+### Analysis of Female-Male Interactions with Optogenetic Silencing
+
+| Function | Description |
+|----------|-------------|
+| `plot_femalemale_STA` | Produces stimulus-triggered averages (rasters, PSTHs, timeseries) for female–male interaction data aligned to LED onset. |
+| `plot_femalemale_PSTH_heatmap` | Generates a peri-stimulus PSTH heatmap of behavioral probability across SS lines for female–male interaction experiments. |
+| `plot_femalemalebehavior_stimbin_heatmap` | Creates a 2-bin (pre vs. stim) heatmap of behavioral probability across SS lines for female–male interaction experiments. |
+
+### Analysis of Interactions in Groups of Males with Optogenetic Activation
+
+| Function | Description |
+|----------|-------------|
+| `build_multistim_workspace` | Assembles per-experiment struct arrays from raw aggression and inter-fly distance data for use by downstream multi-stim plotting functions. |
+| `plot_multistim_timeseries` | Plots mean ± SEM time courses of aggression or inter-fly distance across conditions, with shaded stimulus epochs. |
+| `plot_multistim_pre_during_boxplot` | Creates paired pre-stim vs. during-stim boxplots with Wilcoxon matched-pairs significance testing. |
+
 ## Third-Party Dependencies
 
 The following were downloaded from the MathWorks File Exchange and reside in the `dep` directory:

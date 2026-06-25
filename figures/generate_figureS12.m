@@ -20,13 +20,13 @@ SavePath = '/Users/otopalika/Documents/GitHub/pC1BehavioralAnalysis/results/figu
 
 %% Figure S12B: STAs selected lines 
 
-plot_femalemale_STA(lines{1}, {'m_unilateralwing'},{'Distance', 'FacingAngle', 'AngleBetween'})
-plot_femalemale_STA(lines{2}, {'m_unilateralwing'},{'Distance', 'FacingAngle', 'AngleBetween'})
-plot_femalemale_STA(lines{20}, {'m_unilateralwing'},{'Distance', 'FacingAngle', 'AngleBetween'})
+plot_femalemale_STA('3047597', {'m_unilateralwing'},{'Distance', 'FacingAngle', 'AngleBetween'})
+plot_femalemale_STA('SS46542', {'m_unilateralwing'},{'Distance', 'FacingAngle', 'AngleBetween'})
+plot_femalemale_STA('SS106638', {'m_unilateralwing'},{'Distance', 'FacingAngle', 'AngleBetween'})
 
 
 %% Figure S12C: Heatmaps of behavioral probabilities over time across all pC1 SS Lines for all behavioral classes:
-
+% 
 binsize = 4000; %in milliseconds
 plot_femalemale_PSTH_heatmap('all','close', binsize) %'proximal is equivalent to 'close' in the paper
 plot_femalemale_PSTH_heatmap('all','m_orient', binsize) 
