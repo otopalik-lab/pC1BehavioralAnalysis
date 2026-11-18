@@ -30,7 +30,7 @@ This repository contains code for the processing and analysis of behavioral data
 
 | Folder    | Description |
 |-----------|-------------|
-| `data`    | Must be downloaded from [insert FigShare link here]. Contains workspaces and associated metadata used to generate figures. Not tracked by git (listed in `.gitignore`). |
+| `data`    | Must be downloaded from [this linke](https://doi.org/10.25378/janelia.32666358) . Contains workspaces and associated metadata used to generate figures. Not tracked by git (listed in `.gitignore`). |
 | `figures` | Scripts to regenerate panels with behavioral data for Figures 5-7 and associated supplements. Depend on functions in `dep`. |
 | `results` | Figure outputs are saved here when `SavePath` and `SaveFormat` are specified in a generate_figure script. Not tracked by git (listed in `.gitignore`). |
 | `dep`     | Helper functions used by the generate_figure scripts. Includes functions written by A. Otopalik (at times with Claude's assistance) and third-party functions from MATLAB File Exchange (credited below). |
